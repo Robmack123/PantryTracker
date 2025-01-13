@@ -27,13 +27,19 @@ export const tryGetLoggedInUser = () => {
 };
 
 export const register = (userProfile) => {
-  userProfile.password = btoa(userProfile.password);
+  userProfile.password = btoa(userProfile.password); // Encode password
   return fetch(_apiUrl + "/register", {
-    credentials: "same-origin",
+    credentials: "include", // Ensure cookies are included
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(userProfile),
-  }).then(() => tryGetLoggedInUser());
+  }).then((res) => {
+    if (res.ok) {
+      return tryGetLoggedInUser();
+    } else {
+      return Promise.resolve(null); // Registration failed
+    }
+  });
 };

@@ -128,34 +128,94 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegistrationDTO registration)
     {
-        var user = new IdentityUser
-        {
-            Email = registration.Email,
-            UserName = registration.Email // Using email as username
-        };
 
-        var password = Encoding
-            .GetEncoding("iso-8859-1")
-            .GetString(Convert.FromBase64String(registration.Password));
+        Console.WriteLine($"Registration payload: {System.Text.Json.JsonSerializer.Serialize(registration)}");
 
-        var result = await _userManager.CreateAsync(user, password);
-        if (result.Succeeded)
+        if (registration == null)
         {
+            return BadRequest(new { Message = "Invalid registration data." });
+        }
+
+        // Validate JoinCode and NewHouseholdName
+        if (string.IsNullOrEmpty(registration.JoinCode) && string.IsNullOrEmpty(registration.NewHouseholdName))
+        {
+            return BadRequest(new { Message = "You must provide a JoinCode or a NewHouseholdName." });
+        }
+
+        if (!string.IsNullOrEmpty(registration.JoinCode) && !string.IsNullOrEmpty(registration.NewHouseholdName))
+        {
+            return BadRequest(new { Message = "You cannot provide both a JoinCode and a NewHouseholdName." });
+        }
+
+        try
+        {
+            // Step 1: Create IdentityUser
+            var user = new IdentityUser
+            {
+                Email = registration.Email,
+                UserName = registration.Email // Using email as username
+            };
+
+            var password = Encoding
+                .GetEncoding("iso-8859-1")
+                .GetString(Convert.FromBase64String(registration.Password));
+
+            var result = await _userManager.CreateAsync(user, password);
+            if (!result.Succeeded)
+            {
+                return BadRequest(new { Message = "User creation failed.", Errors = result.Errors });
+            }
+
+            // Step 2: Determine household assignment
+            int? householdId = null;
+
+            if (!string.IsNullOrEmpty(registration.JoinCode))
+            {
+                // Attempt to join an existing household using the join code
+                var household = _dbContext.Households.FirstOrDefault(h => h.JoinCode == registration.JoinCode);
+                if (household == null)
+                {
+                    return BadRequest(new { Message = "Invalid join code." });
+                }
+                householdId = household.Id;
+            }
+            else if (!string.IsNullOrEmpty(registration.NewHouseholdName))
+            {
+                // Create a new household
+                var newHousehold = new Household
+                {
+                    Name = registration.NewHouseholdName,
+                    CreatedAt = DateTime.UtcNow,
+                    JoinCode = GenerateUniqueJoinCode()
+                };
+                _dbContext.Households.Add(newHousehold);
+                await _dbContext.SaveChangesAsync();
+                householdId = newHousehold.Id;
+            }
+            else
+            {
+                // No join code or new household name provided
+                return BadRequest(new { Message = "You must provide a join code to join an existing household or a name to create a new household." });
+            }
+
+            // Step 3: Create UserProfile
             var userProfile = new UserProfile
             {
                 FirstName = registration.FirstName,
                 LastName = registration.LastName,
-                IdentityUserId = user.Id
+                IdentityUserId = user.Id,
+                HouseholdId = householdId
             };
 
             _dbContext.UserProfiles.Add(userProfile);
             await _dbContext.SaveChangesAsync();
 
+            // Step 4: Sign in the user
             var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.UserName)
-            };
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Name, user.UserName)
+        };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
@@ -165,6 +225,20 @@ public class AuthController : ControllerBase
 
             return Ok();
         }
-        return StatusCode(500);
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception during registration: {ex.Message}");
+            return StatusCode(500, new { Message = "An error occurred during registration.", Exception = ex.Message });
+        }
     }
+    private string GenerateUniqueJoinCode()
+    {
+        string joinCode;
+        do
+        {
+            joinCode = Guid.NewGuid().ToString().Substring(0, 8).ToUpper();
+        } while (_dbContext.Households.Any(h => h.JoinCode == joinCode));
+        return joinCode;
+    }
+
 }
