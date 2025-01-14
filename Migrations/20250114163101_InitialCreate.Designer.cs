@@ -12,8 +12,8 @@ using PantryTracker.Data;
 namespace PantryTracker.Migrations
 {
     [DbContext(typeof(PantryTrackerDbContext))]
-    [Migration("20250113164402_InitialCreation")]
-    partial class InitialCreation
+    [Migration("20250114163101_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -223,13 +223,13 @@ namespace PantryTracker.Migrations
                         {
                             Id = "dbc40bc6-0829-4ac5-a3ed-180f5e916a5f",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "2a28c195-3628-4536-8481-7fb8732a720d",
+                            ConcurrencyStamp = "e793fb58-0591-4618-80d3-f73eb46065c5",
                             Email = "admina@strator.comx",
                             EmailConfirmed = false,
                             LockoutEnabled = false,
-                            PasswordHash = "AQAAAAIAAYagAAAAEAhG/JLrSZlepOWkZzisGWAhpb4bG0yXh9q9H5XC2heA9Li+Ue93sd1gw5l1Y6X/9g==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEFjEhFgN0YFFkH6a1XXrzOlhe8Z26hXWgkEuiPOFAbrU3CEnYVm1u2HfcnrIou/rkA==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "a6512a37-fe0d-4317-ab5c-e91031d02fd1",
+                            SecurityStamp = "fc6cf97f-c225-49a2-b546-d478e88e79a9",
                             TwoFactorEnabled = false,
                             UserName = "Administrator"
                         });
@@ -331,6 +331,9 @@ namespace PantryTracker.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("AdminUserId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
 
@@ -344,13 +347,16 @@ namespace PantryTracker.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AdminUserId");
+
                     b.ToTable("Households");
 
                     b.HasData(
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2025, 1, 13, 16, 44, 1, 858, DateTimeKind.Utc).AddTicks(3250),
+                            AdminUserId = 1,
+                            CreatedAt = new DateTime(2025, 1, 14, 16, 31, 0, 626, DateTimeKind.Utc).AddTicks(5422),
                             JoinCode = "ADMIN123",
                             Name = "Admin Household"
                         });
@@ -395,7 +401,7 @@ namespace PantryTracker.Migrations
                             HouseholdId = 1,
                             Name = "Milk",
                             Quantity = 2,
-                            UpdatedAt = new DateTime(2025, 1, 13, 16, 44, 1, 858, DateTimeKind.Utc).AddTicks(3296)
+                            UpdatedAt = new DateTime(2025, 1, 14, 16, 31, 0, 626, DateTimeKind.Utc).AddTicks(5475)
                         },
                         new
                         {
@@ -403,7 +409,7 @@ namespace PantryTracker.Migrations
                             HouseholdId = 1,
                             Name = "Cheese",
                             Quantity = 5,
-                            UpdatedAt = new DateTime(2025, 1, 13, 16, 44, 1, 858, DateTimeKind.Utc).AddTicks(3298)
+                            UpdatedAt = new DateTime(2025, 1, 14, 16, 31, 0, 626, DateTimeKind.Utc).AddTicks(5476)
                         },
                         new
                         {
@@ -411,7 +417,7 @@ namespace PantryTracker.Migrations
                             HouseholdId = 1,
                             Name = "Bread",
                             Quantity = 3,
-                            UpdatedAt = new DateTime(2025, 1, 13, 16, 44, 1, 858, DateTimeKind.Utc).AddTicks(3299)
+                            UpdatedAt = new DateTime(2025, 1, 14, 16, 31, 0, 626, DateTimeKind.Utc).AddTicks(5478)
                         });
                 });
 
@@ -520,6 +526,17 @@ namespace PantryTracker.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("PantryTracker.Models.Household", b =>
+                {
+                    b.HasOne("PantryTracker.Models.UserProfile", "AdminUser")
+                        .WithMany()
+                        .HasForeignKey("AdminUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AdminUser");
                 });
 
             modelBuilder.Entity("PantryTracker.Models.PantryItem", b =>

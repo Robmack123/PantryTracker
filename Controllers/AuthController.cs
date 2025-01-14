@@ -128,25 +128,7 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegistrationDTO registration)
     {
-
-        Console.WriteLine($"Registration payload: {System.Text.Json.JsonSerializer.Serialize(registration)}");
-
-        if (registration == null)
-        {
-            return BadRequest(new { Message = "Invalid registration data." });
-        }
-
-        // Validate JoinCode and NewHouseholdName
-        if (string.IsNullOrEmpty(registration.JoinCode) && string.IsNullOrEmpty(registration.NewHouseholdName))
-        {
-            return BadRequest(new { Message = "You must provide a JoinCode or a NewHouseholdName." });
-        }
-
-        if (!string.IsNullOrEmpty(registration.JoinCode) && !string.IsNullOrEmpty(registration.NewHouseholdName))
-        {
-            return BadRequest(new { Message = "You cannot provide both a JoinCode and a NewHouseholdName." });
-        }
-
+        using var transaction = await _dbContext.Database.BeginTransactionAsync();
         try
         {
             // Step 1: Create IdentityUser
@@ -166,49 +148,57 @@ public class AuthController : ControllerBase
                 return BadRequest(new { Message = "User creation failed.", Errors = result.Errors });
             }
 
-            // Step 2: Determine household assignment
+            // Step 2: Create UserProfile
+            var userProfile = new UserProfile
+            {
+                FirstName = registration.FirstName,
+                LastName = registration.LastName,
+                IdentityUserId = user.Id
+            };
+
+            _dbContext.UserProfiles.Add(userProfile);
+            await _dbContext.SaveChangesAsync();
+
+            // Step 3: Determine household assignment
             int? householdId = null;
 
             if (!string.IsNullOrEmpty(registration.JoinCode))
             {
-                // Attempt to join an existing household using the join code
+                // Join existing household
                 var household = _dbContext.Households.FirstOrDefault(h => h.JoinCode == registration.JoinCode);
                 if (household == null)
                 {
                     return BadRequest(new { Message = "Invalid join code." });
                 }
                 householdId = household.Id;
+
+                // Update the user's HouseholdId
+                userProfile.HouseholdId = householdId;
+                _dbContext.UserProfiles.Update(userProfile);
+                await _dbContext.SaveChangesAsync();
             }
             else if (!string.IsNullOrEmpty(registration.NewHouseholdName))
             {
-                // Create a new household
+                // Create new household
                 var newHousehold = new Household
                 {
                     Name = registration.NewHouseholdName,
                     CreatedAt = DateTime.UtcNow,
-                    JoinCode = GenerateUniqueJoinCode()
+                    JoinCode = GenerateUniqueJoinCode(),
+                    AdminUserId = userProfile.Id // Set the current user's UserProfile.Id as the AdminUserId
                 };
                 _dbContext.Households.Add(newHousehold);
                 await _dbContext.SaveChangesAsync();
                 householdId = newHousehold.Id;
-            }
-            else
-            {
-                // No join code or new household name provided
-                return BadRequest(new { Message = "You must provide a join code to join an existing household or a name to create a new household." });
+
+                // Update the user's HouseholdId
+                userProfile.HouseholdId = newHousehold.Id;
+                _dbContext.UserProfiles.Update(userProfile);
+                await _dbContext.SaveChangesAsync();
             }
 
-            // Step 3: Create UserProfile
-            var userProfile = new UserProfile
-            {
-                FirstName = registration.FirstName,
-                LastName = registration.LastName,
-                IdentityUserId = user.Id,
-                HouseholdId = householdId
-            };
-
-            _dbContext.UserProfiles.Add(userProfile);
-            await _dbContext.SaveChangesAsync();
+            // Commit the transaction
+            await transaction.CommitAsync();
 
             // Step 4: Sign in the user
             var claims = new List<Claim>
@@ -227,10 +217,12 @@ public class AuthController : ControllerBase
         }
         catch (Exception ex)
         {
+            await transaction.RollbackAsync();
             Console.WriteLine($"Exception during registration: {ex.Message}");
             return StatusCode(500, new { Message = "An error occurred during registration.", Exception = ex.Message });
         }
     }
+
     private string GenerateUniqueJoinCode()
     {
         string joinCode;
@@ -240,5 +232,8 @@ public class AuthController : ControllerBase
         } while (_dbContext.Households.Any(h => h.JoinCode == joinCode));
         return joinCode;
     }
+
+
+
 
 }
