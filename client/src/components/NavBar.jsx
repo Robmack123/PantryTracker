@@ -33,6 +33,11 @@ export default function NavBar({ loggedInUser, setLoggedInUser }) {
                   Manage Household
                 </NavLink>
               </NavItem>
+              <NavItem>
+                <NavLink tag={RRNavLink} to="/pantry">
+                  Pantry Items
+                </NavLink>
+              </NavItem>
             </Collapse>
             <Button
               color="primary"

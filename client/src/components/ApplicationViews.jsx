@@ -3,6 +3,7 @@ import { AuthorizedRoute } from "./auth/AuthorizedRoute";
 import Login from "./auth/Login";
 import Register from "./auth/Register";
 import ManageHousehold from "./household/ManageHousehold";
+import { PantryItems } from "./pantry/PantryItems";
 
 export default function ApplicationViews({ loggedInUser, setLoggedInUser }) {
   return (
@@ -27,6 +28,14 @@ export default function ApplicationViews({ loggedInUser, setLoggedInUser }) {
           element={
             <AuthorizedRoute loggedInUser={loggedInUser}>
               <ManageHousehold />
+            </AuthorizedRoute>
+          }
+        />
+        <Route
+          path="/pantry"
+          element={
+            <AuthorizedRoute loggedInUser={loggedInUser}>
+              <PantryItems />
             </AuthorizedRoute>
           }
         />
