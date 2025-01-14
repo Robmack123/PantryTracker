@@ -27,19 +27,20 @@ export const tryGetLoggedInUser = () => {
 };
 
 export const register = (userProfile) => {
-  userProfile.password = btoa(userProfile.password); // Encode password
-  return fetch(_apiUrl + "/register", {
-    credentials: "include", // Ensure cookies are included
+  userProfile.password = btoa(userProfile.password); // Encode the password as Base64
+  return fetch("/api/auth/register", {
+    credentials: "same-origin",
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(userProfile),
   }).then((res) => {
-    if (res.ok) {
-      return tryGetLoggedInUser();
-    } else {
-      return Promise.resolve(null); // Registration failed
+    if (!res.ok) {
+      return res.json().then((error) => {
+        throw new Error(error.message || "Registration failed.");
+      });
     }
+    return tryGetLoggedInUser();
   });
 };

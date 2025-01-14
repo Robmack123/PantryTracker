@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace PantryTracker.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreation : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -64,21 +64,6 @@ namespace PantryTracker.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Categories", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Households",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    JoinCode = table.Column<string>(type: "text", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Households", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -188,6 +173,40 @@ namespace PantryTracker.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "CategoryPantryItem",
+                columns: table => new
+                {
+                    CategoriesId = table.Column<int>(type: "integer", nullable: false),
+                    PantryItemsId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CategoryPantryItem", x => new { x.CategoriesId, x.PantryItemsId });
+                    table.ForeignKey(
+                        name: "FK_CategoryPantryItem_Categories_CategoriesId",
+                        column: x => x.CategoriesId,
+                        principalTable: "Categories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Households",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    JoinCode = table.Column<string>(type: "text", nullable: false),
+                    AdminUserId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Households", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserProfiles",
                 columns: table => new
                 {
@@ -242,30 +261,6 @@ namespace PantryTracker.Migrations
                         principalColumn: "Id");
                 });
 
-            migrationBuilder.CreateTable(
-                name: "CategoryPantryItem",
-                columns: table => new
-                {
-                    CategoriesId = table.Column<int>(type: "integer", nullable: false),
-                    PantryItemsId = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_CategoryPantryItem", x => new { x.CategoriesId, x.PantryItemsId });
-                    table.ForeignKey(
-                        name: "FK_CategoryPantryItem_Categories_CategoriesId",
-                        column: x => x.CategoriesId,
-                        principalTable: "Categories",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_CategoryPantryItem_PantryItems_PantryItemsId",
-                        column: x => x.PantryItemsId,
-                        principalTable: "PantryItems",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
             migrationBuilder.InsertData(
                 table: "AspNetRoles",
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
@@ -274,7 +269,7 @@ namespace PantryTracker.Migrations
             migrationBuilder.InsertData(
                 table: "AspNetUsers",
                 columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "Email", "EmailConfirmed", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
-                values: new object[] { "dbc40bc6-0829-4ac5-a3ed-180f5e916a5f", 0, "2a28c195-3628-4536-8481-7fb8732a720d", "admina@strator.comx", false, false, null, null, null, "AQAAAAIAAYagAAAAEAhG/JLrSZlepOWkZzisGWAhpb4bG0yXh9q9H5XC2heA9Li+Ue93sd1gw5l1Y6X/9g==", null, false, "a6512a37-fe0d-4317-ab5c-e91031d02fd1", false, "Administrator" });
+                values: new object[] { "dbc40bc6-0829-4ac5-a3ed-180f5e916a5f", 0, "e793fb58-0591-4618-80d3-f73eb46065c5", "admina@strator.comx", false, false, null, null, null, "AQAAAAIAAYagAAAAEFjEhFgN0YFFkH6a1XXrzOlhe8Z26hXWgkEuiPOFAbrU3CEnYVm1u2HfcnrIou/rkA==", null, false, "fc6cf97f-c225-49a2-b546-d478e88e79a9", false, "Administrator" });
 
             migrationBuilder.InsertData(
                 table: "Categories",
@@ -288,29 +283,29 @@ namespace PantryTracker.Migrations
                 });
 
             migrationBuilder.InsertData(
-                table: "Households",
-                columns: new[] { "Id", "CreatedAt", "JoinCode", "Name" },
-                values: new object[] { 1, new DateTime(2025, 1, 13, 16, 44, 1, 858, DateTimeKind.Utc).AddTicks(3250), "ADMIN123", "Admin Household" });
-
-            migrationBuilder.InsertData(
                 table: "AspNetUserRoles",
                 columns: new[] { "RoleId", "UserId" },
                 values: new object[] { "c3aaeb97-d2ba-4a53-a521-4eea61e59b35", "dbc40bc6-0829-4ac5-a3ed-180f5e916a5f" });
+
+            migrationBuilder.InsertData(
+                table: "UserProfiles",
+                columns: new[] { "Id", "FirstName", "HouseholdId", "IdentityUserId", "LastName" },
+                values: new object[] { 1, "Admina", null, "dbc40bc6-0829-4ac5-a3ed-180f5e916a5f", "Strator" });
+
+            migrationBuilder.InsertData(
+                table: "Households",
+                columns: new[] { "Id", "AdminUserId", "CreatedAt", "JoinCode", "Name" },
+                values: new object[] { 1, 1, new DateTime(2025, 1, 14, 16, 31, 0, 626, DateTimeKind.Utc).AddTicks(5422), "ADMIN123", "Admin Household" });
 
             migrationBuilder.InsertData(
                 table: "PantryItems",
                 columns: new[] { "Id", "HouseholdId", "Name", "Quantity", "UpdatedAt", "UserProfileId" },
                 values: new object[,]
                 {
-                    { 1, 1, "Milk", 2, new DateTime(2025, 1, 13, 16, 44, 1, 858, DateTimeKind.Utc).AddTicks(3296), null },
-                    { 2, 1, "Cheese", 5, new DateTime(2025, 1, 13, 16, 44, 1, 858, DateTimeKind.Utc).AddTicks(3298), null },
-                    { 3, 1, "Bread", 3, new DateTime(2025, 1, 13, 16, 44, 1, 858, DateTimeKind.Utc).AddTicks(3299), null }
+                    { 1, 1, "Milk", 2, new DateTime(2025, 1, 14, 16, 31, 0, 626, DateTimeKind.Utc).AddTicks(5475), null },
+                    { 2, 1, "Cheese", 5, new DateTime(2025, 1, 14, 16, 31, 0, 626, DateTimeKind.Utc).AddTicks(5476), null },
+                    { 3, 1, "Bread", 3, new DateTime(2025, 1, 14, 16, 31, 0, 626, DateTimeKind.Utc).AddTicks(5478), null }
                 });
-
-            migrationBuilder.InsertData(
-                table: "UserProfiles",
-                columns: new[] { "Id", "FirstName", "HouseholdId", "IdentityUserId", "LastName" },
-                values: new object[] { 1, "Admina", null, "dbc40bc6-0829-4ac5-a3ed-180f5e916a5f", "Strator" });
 
             migrationBuilder.InsertData(
                 table: "CategoryPantryItem",
@@ -365,6 +360,11 @@ namespace PantryTracker.Migrations
                 column: "PantryItemsId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Households_AdminUserId",
+                table: "Households",
+                column: "AdminUserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PantryItems_HouseholdId",
                 table: "PantryItems",
                 column: "HouseholdId");
@@ -383,11 +383,35 @@ namespace PantryTracker.Migrations
                 name: "IX_UserProfiles_IdentityUserId",
                 table: "UserProfiles",
                 column: "IdentityUserId");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_CategoryPantryItem_PantryItems_PantryItemsId",
+                table: "CategoryPantryItem",
+                column: "PantryItemsId",
+                principalTable: "PantryItems",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Households_UserProfiles_AdminUserId",
+                table: "Households",
+                column: "AdminUserId",
+                principalTable: "UserProfiles",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropForeignKey(
+                name: "FK_UserProfiles_AspNetUsers_IdentityUserId",
+                table: "UserProfiles");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Households_UserProfiles_AdminUserId",
+                table: "Households");
+
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 
@@ -416,10 +440,10 @@ namespace PantryTracker.Migrations
                 name: "PantryItems");
 
             migrationBuilder.DropTable(
-                name: "UserProfiles");
+                name: "AspNetUsers");
 
             migrationBuilder.DropTable(
-                name: "AspNetUsers");
+                name: "UserProfiles");
 
             migrationBuilder.DropTable(
                 name: "Households");

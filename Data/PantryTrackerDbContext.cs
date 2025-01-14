@@ -21,6 +21,12 @@ public class PantryTrackerDbContext : IdentityDbContext<IdentityUser>
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.Entity<Household>()
+            .HasOne(h => h.AdminUser)
+            .WithMany()
+            .HasForeignKey(h => h.AdminUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         modelBuilder.Entity<PantryItem>()
             .HasMany(pi => pi.Categories)
             .WithMany(c => c.PantryItems);
@@ -58,7 +64,8 @@ public class PantryTrackerDbContext : IdentityDbContext<IdentityUser>
             Id = 1,
             Name = "Admin Household",
             CreatedAt = DateTime.UtcNow,
-            JoinCode = "ADMIN123"
+            JoinCode = "ADMIN123",
+            AdminUserId = 1
         });
         modelBuilder.Entity<Category>().HasData(
            new Category { Id = 1, Name = "Dairy" },

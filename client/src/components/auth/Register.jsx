@@ -14,11 +14,11 @@ export default function Register({ setLoggedInUser }) {
 
   const [passwordMismatch, setPasswordMismatch] = useState(false);
   const [registrationFailure, setRegistrationFailure] = useState(false);
-  const [householdError, setHouseholdError] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Validate password matching
@@ -29,20 +29,20 @@ export default function Register({ setLoggedInUser }) {
 
     // Validate household inputs
     if (joinCode && newHouseholdName) {
-      setHouseholdError(
+      setErrorMessage(
         "Please provide either a join code to join an existing household or a name to create a new household, but not both."
       );
       return;
     }
 
     if (!joinCode && !newHouseholdName) {
-      setHouseholdError(
+      setErrorMessage(
         "Please provide a join code to join an existing household or a name to create a new household."
       );
       return;
     }
 
-    setHouseholdError("");
+    setErrorMessage("");
 
     // Create user object
     const newUser = {
@@ -54,15 +54,17 @@ export default function Register({ setLoggedInUser }) {
       newHouseholdName: newHouseholdName || null,
     };
 
-    // Register the user
-    register(newUser).then((user) => {
+    try {
+      // Register the user
+      const user = await register(newUser);
       if (user) {
         setLoggedInUser(user);
         navigate("/");
-      } else {
-        setRegistrationFailure(true);
       }
-    });
+    } catch (err) {
+      setRegistrationFailure(true);
+      setErrorMessage(err.message || "Registration failed. Please try again.");
+    }
   };
 
   return (
@@ -135,8 +137,8 @@ export default function Register({ setLoggedInUser }) {
           disabled={!!joinCode} // Disable if joining an existing household
         />
       </FormGroup>
-      <p style={{ color: "red" }} hidden={!householdError}>
-        {householdError}
+      <p style={{ color: "red" }} hidden={!errorMessage}>
+        {errorMessage}
       </p>
       <p style={{ color: "red" }} hidden={!registrationFailure}>
         Registration Failure

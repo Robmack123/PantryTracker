@@ -28,6 +28,11 @@ export default function NavBar({ loggedInUser, setLoggedInUser }) {
             <NavbarToggler onClick={toggleNavbar} />
             <Collapse isOpen={open} navbar>
               <Nav navbar></Nav>
+              <NavItem>
+                <NavLink tag={RRNavLink} to="/household/manage">
+                  Manage Household
+                </NavLink>
+              </NavItem>
             </Collapse>
             <Button
               color="primary"
