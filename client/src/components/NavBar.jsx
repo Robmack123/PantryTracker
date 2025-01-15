@@ -1,53 +1,56 @@
 import { useState } from "react";
 import { NavLink as RRNavLink } from "react-router-dom";
 import {
-  Button,
-  Collapse,
-  Nav,
-  NavLink,
-  NavItem,
   Navbar,
   NavbarBrand,
   NavbarToggler,
+  Collapse,
+  Nav,
+  NavItem,
+  NavLink,
+  Button,
 } from "reactstrap";
 import { logout } from "../managers/authManager";
 
 export default function NavBar({ loggedInUser, setLoggedInUser }) {
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
-  const toggleNavbar = () => setOpen(!open);
+  const toggleNavbar = () => setIsOpen(!isOpen);
 
   return (
-    <div>
-      <Navbar color="light" light fixed="true" expand="lg">
-        <NavbarBrand className="mr-auto" tag={RRNavLink} to="/">
-          🍴PantryPal
-        </NavbarBrand>
-        {loggedInUser ? (
-          <>
-            <NavbarToggler onClick={toggleNavbar} />
-            <Collapse isOpen={open} navbar>
-              <Nav navbar></Nav>
+    <Navbar color="light" light expand="md" fixed="top">
+      <NavbarBrand tag={RRNavLink} to="/">
+        🍴PantryPal
+      </NavbarBrand>
+      <NavbarToggler onClick={toggleNavbar} />
+      <Collapse isOpen={isOpen} navbar>
+        <Nav className="me-auto" navbar>
+          {loggedInUser && (
+            <>
+              <NavItem>
+                <NavLink tag={RRNavLink} to="/pantry">
+                  Pantry Items
+                </NavLink>
+              </NavItem>
               <NavItem>
                 <NavLink tag={RRNavLink} to="/household/manage">
                   Manage Household
                 </NavLink>
               </NavItem>
-            </Collapse>
-            <Button
-              color="primary"
-              onClick={(e) => {
-                e.preventDefault();
-                setOpen(false);
-                logout().then(() => {
-                  setLoggedInUser(null);
-                  setOpen(false);
-                });
-              }}
-            >
-              Logout
-            </Button>
-          </>
+            </>
+          )}
+        </Nav>
+        {loggedInUser ? (
+          <Button
+            color="primary"
+            onClick={() => {
+              logout().then(() => {
+                setLoggedInUser(null);
+              });
+            }}
+          >
+            Logout
+          </Button>
         ) : (
           <Nav navbar>
             <NavItem>
@@ -57,7 +60,7 @@ export default function NavBar({ loggedInUser, setLoggedInUser }) {
             </NavItem>
           </Nav>
         )}
-      </Navbar>
-    </div>
+      </Collapse>
+    </Navbar>
   );
 }

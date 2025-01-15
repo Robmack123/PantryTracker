@@ -85,7 +85,7 @@ export default function ManageHousehold() {
                     className="d-flex justify-content-between align-items-center"
                   >
                     <span>
-                      {member.firstName} {member.lastName} ({member.email})
+                      {member.firstName} {member.lastName}
                     </span>
                     {loggedInUserId === household.adminUserId && (
                       <Button
