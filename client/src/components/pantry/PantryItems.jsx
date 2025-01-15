@@ -3,10 +3,11 @@ import {
   getPantryItems,
   getPantryItemsByCategory,
 } from "../../managers/pantryItemManager";
-import { Card, CardBody, CardTitle, Table, Alert, Button } from "reactstrap";
+import { Table, Alert, Button } from "reactstrap";
 import { CategoryDropdown } from "./CategoryFilter";
 import { AddPantryItemModal } from "./AddPantryItemModal";
 import { ProductDetailsModal } from "./ProductDetailsModa";
+import "./pantryList.css";
 
 export const PantryItems = () => {
   const [pantryItems, setPantryItems] = useState([]);
@@ -60,62 +61,67 @@ export const PantryItems = () => {
 
   return (
     <div>
-      <Card className="mt-4">
+      {/* <Card className="mt-4">
         <CardBody>
-          <CardTitle tag="h3">Pantry Items</CardTitle>
-          <div className="d-flex align-items-center mb-3">
-            {/* Category Dropdown */}
-            <CategoryDropdown
-              onCategorySelect={handleCategorySelect}
-              selectedCategories={selectedCategories}
-            />
-            <Button
-              color="primary"
-              size="sm"
-              onClick={toggleModal}
-              className="ms-3"
-            >
-              Add New Item
-            </Button>
-          </div>
+          <CardTitle tag="h3">Pantry Items</CardTitle> */}
+      <div className="d-flex align-items-center mb-3">
+        {/* Category Dropdown */}
+        <CategoryDropdown
+          onCategorySelect={handleCategorySelect}
+          selectedCategories={selectedCategories}
+        />
+        <Button
+          color="primary"
+          size="sm"
+          onClick={toggleModal}
+          className="ms-3"
+        >
+          Add New Item
+        </Button>
+      </div>
 
-          {/* Loading, Error, and Pantry Table */}
-          {loading && <p>Loading pantry items...</p>}
-          {error && (
-            <Alert color="danger" timeout={3000}>
-              {error}
-            </Alert>
-          )}
-          {pantryItems.length > 0 ? (
-            <Table bordered className="mt-3">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Name</th>
-                  <th>Quantity</th>
-                  <th>Last Updated</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pantryItems.map((item, index) => (
-                  <tr
-                    key={item.id}
-                    onClick={() => openDetailsModal(item)} // Open details modal on row click
-                    style={{ cursor: "pointer" }}
-                  >
-                    <td>{index + 1}</td>
-                    <td>{item.name}</td>
-                    <td>{item.quantity}</td>
-                    <td>{new Date(item.updatedAt).toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          ) : (
-            !loading && <p>No items found for the selected category.</p>
-          )}
-        </CardBody>
-      </Card>
+      {/* Loading, Error, and Pantry Table */}
+      {loading && <p>Loading pantry items...</p>}
+      {error && (
+        <Alert color="danger" timeout={3000}>
+          {error}
+        </Alert>
+      )}
+      {pantryItems.length > 0 ? (
+        <Table
+          bordered
+          hover
+          className="table-light table-hover w-100 custom-table"
+          style={{ fontSize: "1.2rem" }} // Larger text for readability
+        >
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Quantity</th>
+              <th>Last Updated</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pantryItems.map((item, index) => (
+              <tr
+                key={item.id}
+                onClick={() => openDetailsModal(item)}
+                style={{ cursor: "pointer" }}
+              >
+                <td>{index + 1}</td>
+                <td>{item.name}</td>
+                <td>{item.quantity}</td>
+                <td>{new Date(item.updatedAt).toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      ) : (
+        !loading && <p>No items found for the selected category.</p>
+      )}
+      {/* </CardBody>
+      </Card> */}
 
       {/* Add Pantry Item Modal */}
       <AddPantryItemModal

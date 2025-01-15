@@ -28,13 +28,13 @@ export default function NavBar({ loggedInUser, setLoggedInUser }) {
           {loggedInUser && (
             <>
               <NavItem>
-                <NavLink tag={RRNavLink} to="/household/manage">
-                  Manage Household
+                <NavLink tag={RRNavLink} to="/pantry">
+                  Pantry Items
                 </NavLink>
               </NavItem>
               <NavItem>
-                <NavLink tag={RRNavLink} to="/pantry">
-                  Pantry Items
+                <NavLink tag={RRNavLink} to="/household/manage">
+                  Manage Household
                 </NavLink>
               </NavItem>
             </>
