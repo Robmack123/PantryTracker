@@ -6,4 +6,5 @@ public class PantryItemDTO
     public string Name { get; set; }
     public int Quantity { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public List<int> CategoryIds { get; set; }
 }

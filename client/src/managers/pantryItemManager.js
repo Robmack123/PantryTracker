@@ -14,3 +14,19 @@ export const getPantryItems = () => {
     return res.json();
   });
 };
+
+export const getPantryItemsByCategory = (categoryIds) => {
+  const queryString = categoryIds.map((id) => `categoryIds=${id}`).join("&");
+  return fetch(`${apiUrl}/by-category?${queryString}`, {
+    method: "GET",
+    credentials: "include", // Ensures cookies are sent with the request
+    headers: {
+      "Content-Type": "application/json",
+    },
+  }).then((res) => {
+    if (!res.ok) {
+      throw new Error("Failed to fetch pantry items by category.");
+    }
+    return res.json();
+  });
+};

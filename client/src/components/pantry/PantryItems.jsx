@@ -1,14 +1,29 @@
 import { useEffect, useState } from "react";
-import { getPantryItems } from "../../managers/pantryItemManager";
+import {
+  getPantryItems,
+  getPantryItemsByCategory,
+} from "../../managers/pantryItemManager";
 import { Card, CardBody, CardTitle, Table, Alert } from "reactstrap";
+import { CategoryDropdown } from "./CategoryFilter";
 
 export const PantryItems = () => {
   const [pantryItems, setPantryItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    getPantryItems()
+    fetchPantryItems();
+  }, []);
+
+  const fetchPantryItems = (categoryId) => {
+    setLoading(true);
+    setError("");
+
+    const fetchFunction = categoryId
+      ? () => getPantryItemsByCategory([categoryId])
+      : getPantryItems;
+
+    fetchFunction()
       .then((items) => {
         setPantryItems(items);
         setLoading(false);
@@ -18,49 +33,50 @@ export const PantryItems = () => {
         setError("Failed to load pantry items.");
         setLoading(false);
       });
-  }, []);
+  };
 
-  if (loading) {
-    return <p>Loading pantry items...</p>;
-  }
-
-  if (error) {
-    return (
-      <Alert color="danger" timeout={3000}>
-        {error}
-      </Alert>
-    );
-  }
+  const handleCategorySelect = (categoryId) => {
+    fetchPantryItems(categoryId);
+  };
 
   return (
-    <Card className="mt-4">
-      <CardBody>
-        <CardTitle tag="h3">Household Pantry Items</CardTitle>
-        {pantryItems.length > 0 ? (
-          <Table bordered>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Quantity</th>
-                <th>Last Updated</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pantryItems.map((item, index) => (
-                <tr key={item.id}>
-                  <td>{index + 1}</td>
-                  <td>{item.name}</td>
-                  <td>{item.quantity}</td>
-                  <td>{new Date(item.updatedAt).toLocaleString()}</td>
+    <div>
+      <Card className="mt-4">
+        <CardBody>
+          <CardTitle tag="h3">Filter Pantry Items by Category</CardTitle>
+          <CategoryDropdown onCategorySelect={handleCategorySelect} />
+          {loading && <p>Loading pantry items...</p>}
+          {error && (
+            <Alert color="danger" timeout={3000}>
+              {error}
+            </Alert>
+          )}
+          {pantryItems.length > 0 ? (
+            <Table bordered className="mt-3">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Quantity</th>
+                  <th>Last Updated</th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
-        ) : (
-          <p>No items in the pantry.</p>
-        )}
-      </CardBody>
-    </Card>
+              </thead>
+              <tbody>
+                {pantryItems.map((item, index) => (
+                  <tr key={item.id}>
+                    <td>{index + 1}</td>
+                    <td>{item.name}</td>
+                    <td>{item.quantity}</td>
+                    <td>{new Date(item.updatedAt).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          ) : (
+            !loading && <p>No items found for the selected category.</p>
+          )}
+        </CardBody>
+      </Card>
+    </div>
   );
 };
