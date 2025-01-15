@@ -30,3 +30,19 @@ export const getPantryItemsByCategory = (categoryIds) => {
     return res.json();
   });
 };
+
+export const addOrUpdatePantryItem = (pantryItem) => {
+  return fetch(`${apiUrl}`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(pantryItem),
+  }).then((res) => {
+    if (!res.ok) {
+      throw new Error("Failed to add or update pantry item.");
+    }
+    return res.json();
+  });
+};

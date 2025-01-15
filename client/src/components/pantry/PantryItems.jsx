@@ -3,19 +3,21 @@ import {
   getPantryItems,
   getPantryItemsByCategory,
 } from "../../managers/pantryItemManager";
-import { Card, CardBody, CardTitle, Table, Alert } from "reactstrap";
+import { Card, CardBody, CardTitle, Table, Alert, Button } from "reactstrap";
 import { CategoryDropdown } from "./CategoryFilter";
+import { AddPantryItemModal } from "./AddPantryItemModal";
 
 export const PantryItems = () => {
   const [pantryItems, setPantryItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     fetchPantryItems();
   }, []);
 
-  const fetchPantryItems = (categoryId) => {
+  const fetchPantryItems = (categoryId = null) => {
     setLoading(true);
     setError("");
 
@@ -39,12 +41,24 @@ export const PantryItems = () => {
     fetchPantryItems(categoryId);
   };
 
+  const toggleModal = () => setModalOpen(!modalOpen);
+
   return (
     <div>
       <Card className="mt-4">
         <CardBody>
-          <CardTitle tag="h3">Filter Pantry Items by Category</CardTitle>
-          <CategoryDropdown onCategorySelect={handleCategorySelect} />
+          <CardTitle tag="h3">Pantry Items</CardTitle>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            {/* Category Dropdown */}
+            <CategoryDropdown onCategorySelect={handleCategorySelect} />
+
+            {/* Add Item Button */}
+            <Button color="primary" onClick={toggleModal}>
+              Add New Item
+            </Button>
+          </div>
+
+          {/* Loading, Error, and Pantry Table */}
           {loading && <p>Loading pantry items...</p>}
           {error && (
             <Alert color="danger" timeout={3000}>
@@ -77,6 +91,13 @@ export const PantryItems = () => {
           )}
         </CardBody>
       </Card>
+
+      {/* Add Pantry Item Modal */}
+      <AddPantryItemModal
+        isOpen={modalOpen}
+        toggle={toggleModal}
+        refreshPantryItems={fetchPantryItems}
+      />
     </div>
   );
 };
