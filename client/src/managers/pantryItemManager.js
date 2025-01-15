@@ -46,3 +46,18 @@ export const addOrUpdatePantryItem = (pantryItem) => {
     return res.json();
   });
 };
+
+export const updatePantryItemQuantity = (itemId, dto) => {
+  return fetch(`${apiUrl}/${itemId}/quantity`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(dto),
+  }).then((res) => {
+    if (!res.ok) {
+      throw new Error("Failed to update quantity.");
+    }
+    return res.json();
+  });
+};

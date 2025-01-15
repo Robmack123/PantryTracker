@@ -6,23 +6,27 @@ import {
 import { Card, CardBody, CardTitle, Table, Alert, Button } from "reactstrap";
 import { CategoryDropdown } from "./CategoryFilter";
 import { AddPantryItemModal } from "./AddPantryItemModal";
+import { ProductDetailsModal } from "./ProductDetailsModa";
 
 export const PantryItems = () => {
   const [pantryItems, setPantryItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false); // State to track details modal
+  const [selectedProduct, setSelectedProduct] = useState(null); // State to track the selected product
+  const [selectedCategories, setSelectedCategories] = useState([]); // Track selected categories
 
   useEffect(() => {
     fetchPantryItems();
   }, []);
 
-  const fetchPantryItems = (categoryId = null) => {
+  const fetchPantryItems = (categoryIds = []) => {
     setLoading(true);
     setError("");
 
-    const fetchFunction = categoryId
-      ? () => getPantryItemsByCategory([categoryId])
+    const fetchFunction = categoryIds.length
+      ? () => getPantryItemsByCategory(categoryIds)
       : getPantryItems;
 
     fetchFunction()
@@ -37,23 +41,40 @@ export const PantryItems = () => {
       });
   };
 
-  const handleCategorySelect = (categoryId) => {
-    fetchPantryItems(categoryId);
+  const handleCategorySelect = (categoryIds) => {
+    setSelectedCategories(categoryIds);
+    fetchPantryItems(categoryIds);
   };
 
   const toggleModal = () => setModalOpen(!modalOpen);
+
+  const openDetailsModal = (product) => {
+    setSelectedProduct(product);
+    setDetailsOpen(true);
+  };
+
+  const closeDetailsModal = () => {
+    setSelectedProduct(null);
+    setDetailsOpen(false);
+  };
 
   return (
     <div>
       <Card className="mt-4">
         <CardBody>
           <CardTitle tag="h3">Pantry Items</CardTitle>
-          <div className="d-flex justify-content-between align-items-center mb-3">
+          <div className="d-flex align-items-center mb-3">
             {/* Category Dropdown */}
-            <CategoryDropdown onCategorySelect={handleCategorySelect} />
-
-            {/* Add Item Button */}
-            <Button color="primary" onClick={toggleModal}>
+            <CategoryDropdown
+              onCategorySelect={handleCategorySelect}
+              selectedCategories={selectedCategories}
+            />
+            <Button
+              color="primary"
+              size="sm"
+              onClick={toggleModal}
+              className="ms-3"
+            >
               Add New Item
             </Button>
           </div>
@@ -77,7 +98,11 @@ export const PantryItems = () => {
               </thead>
               <tbody>
                 {pantryItems.map((item, index) => (
-                  <tr key={item.id}>
+                  <tr
+                    key={item.id}
+                    onClick={() => openDetailsModal(item)} // Open details modal on row click
+                    style={{ cursor: "pointer" }}
+                  >
                     <td>{index + 1}</td>
                     <td>{item.name}</td>
                     <td>{item.quantity}</td>
@@ -96,8 +121,18 @@ export const PantryItems = () => {
       <AddPantryItemModal
         isOpen={modalOpen}
         toggle={toggleModal}
-        refreshPantryItems={fetchPantryItems}
+        refreshPantryItems={() => fetchPantryItems(selectedCategories)}
       />
+
+      {/* Product Details Modal */}
+      {selectedProduct && (
+        <ProductDetailsModal
+          isOpen={detailsOpen}
+          toggle={closeDetailsModal}
+          product={selectedProduct}
+          refreshPantryItems={() => fetchPantryItems(selectedCategories)}
+        />
+      )}
     </div>
   );
 };

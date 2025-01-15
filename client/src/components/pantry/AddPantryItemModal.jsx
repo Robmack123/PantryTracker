@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Modal,
   ModalHeader,
@@ -11,12 +11,23 @@ import {
   Input,
 } from "reactstrap";
 import { addOrUpdatePantryItem } from "../../managers/pantryItemManager";
+import { CategoryDropdown } from "./CategoryFilter"; // Use updated dropdown
 
 export const AddPantryItemModal = ({ isOpen, toggle, refreshPantryItems }) => {
   const [itemName, setItemName] = useState("");
   const [quantity, setQuantity] = useState(1);
-  const [categories, setCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const [error, setError] = useState("");
+
+  // Reset modal state when closed
+  useEffect(() => {
+    if (!isOpen) {
+      setItemName("");
+      setQuantity(1);
+      setSelectedCategories([]);
+      setError("");
+    }
+  }, [isOpen]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -25,7 +36,7 @@ export const AddPantryItemModal = ({ isOpen, toggle, refreshPantryItems }) => {
     const newItem = {
       name: itemName,
       quantity: parseInt(quantity, 10),
-      categoryIds: categories.map(Number), // Ensure IDs are integers
+      categoryIds: selectedCategories,
     };
 
     addOrUpdatePantryItem(newItem)
@@ -37,17 +48,6 @@ export const AddPantryItemModal = ({ isOpen, toggle, refreshPantryItems }) => {
         console.error("Error adding pantry item:", err);
         setError("Failed to add pantry item.");
       });
-  };
-
-  const handleCategoryChange = (event) => {
-    const options = event.target.options;
-    const selectedCategories = [];
-    for (let i = 0; i < options.length; i++) {
-      if (options[i].selected) {
-        selectedCategories.push(options[i].value);
-      }
-    }
-    setCategories(selectedCategories);
   };
 
   return (
@@ -78,19 +78,12 @@ export const AddPantryItemModal = ({ isOpen, toggle, refreshPantryItems }) => {
             />
           </FormGroup>
           <FormGroup>
-            <Label for="categories">Categories</Label>
-            <Input
-              type="select"
-              id="categories"
-              multiple
-              onChange={handleCategoryChange}
-            >
-              {/* Replace with dynamic categories */}
-              <option value="1">Dairy</option>
-              <option value="2">Snacks</option>
-              <option value="3">Beverages</option>
-              <option value="4">Produce</option>
-            </Input>
+            <Label>Categories</Label>
+            {/* Updated CategoryDropdown */}
+            <CategoryDropdown
+              onCategorySelect={setSelectedCategories}
+              selectedCategories={selectedCategories}
+            />
           </FormGroup>
           <ModalFooter>
             <Button color="primary" type="submit">

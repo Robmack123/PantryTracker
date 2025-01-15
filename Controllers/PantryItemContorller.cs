@@ -75,7 +75,7 @@ namespace PantryTracker.Controllers
 
                 // Check if the item already exists in the household's pantry
                 var existingItem = _dbContext.PantryItems
-                    .Include(pi => pi.Categories) // Eagerly load Categories
+                    .Include(pi => pi.Categories)
                     .FirstOrDefault(pi =>
                         pi.Name.ToLower() == pantryItemDto.Name.ToLower() &&
                         pi.HouseholdId == userProfile.HouseholdId);
@@ -86,7 +86,6 @@ namespace PantryTracker.Controllers
                     existingItem.Quantity += pantryItemDto.Quantity;
                     existingItem.UpdatedAt = DateTime.UtcNow;
 
-                    // Update categories if provided
                     if (pantryItemDto.CategoryIds != null && pantryItemDto.CategoryIds.Count > 0)
                     {
                         var categories = _dbContext.Categories
@@ -102,12 +101,10 @@ namespace PantryTracker.Controllers
                         }
                     }
 
-                    // Update the existing item
                     _dbContext.PantryItems.Update(existingItem);
                 }
                 else
                 {
-                    // If it doesn't exist, create a new item
                     var newPantryItem = new PantryItem
                     {
                         Name = pantryItemDto.Name,
@@ -122,7 +119,6 @@ namespace PantryTracker.Controllers
                     _dbContext.PantryItems.Add(newPantryItem);
                 }
 
-                // Save changes once at the end
                 _dbContext.SaveChanges();
 
                 return Ok(new { Message = "Pantry item successfully added or updated." });
@@ -175,6 +171,48 @@ namespace PantryTracker.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"Error fetching pantry items by category: {ex.Message}");
+                return StatusCode(500, new { Message = "An error occurred.", Exception = ex.Message });
+            }
+        }
+
+        [HttpPut("{id}/quantity")]
+        [Authorize]
+        public IActionResult UpdatePantryItemQuantity(int id, [FromBody] UpdatePantryItemQuantityDTO dto)
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var userProfile = _dbContext.UserProfiles
+                    .FirstOrDefault(up => up.IdentityUserId == userId);
+
+                if (userProfile == null || userProfile.HouseholdId == null)
+                {
+                    return BadRequest(new { Message = "You are not part of a household." });
+                }
+
+                if (dto.Quantity < 0)
+                {
+                    return BadRequest(new { Message = "Quantity cannot be negative." });
+                }
+
+                var pantryItem = _dbContext.PantryItems
+                    .FirstOrDefault(pi => pi.Id == id && pi.HouseholdId == userProfile.HouseholdId);
+
+                if (pantryItem == null)
+                {
+                    return NotFound(new { Message = "Pantry item not found or does not belong to your household." });
+                }
+
+                pantryItem.Quantity = dto.Quantity;
+                pantryItem.UpdatedAt = DateTime.UtcNow;
+
+                _dbContext.SaveChanges();
+
+                return Ok(new { Message = "Pantry item quantity updated successfully.", PantryItem = pantryItem });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating pantry item quantity: {ex.Message}");
                 return StatusCode(500, new { Message = "An error occurred.", Exception = ex.Message });
             }
         }
