@@ -19,7 +19,6 @@ import "./pantryList.css";
 
 export const PantryItems = () => {
   const [pantryItems, setPantryItems] = useState([]);
-  const [filteredItems, setFilteredItems] = useState([]); // For search results
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -27,34 +26,21 @@ export const PantryItems = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalItems, setTotalItems] = useState(0); // Total items in the list
-  const [searchQuery, setSearchQuery] = useState(""); // Search input state
+  const [totalItems, setTotalItems] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
   const itemsPerPage = 10;
 
   useEffect(() => {
-    fetchPantryItems(selectedCategories, 1, searchQuery); // Reset to page 1 when search query changes
-    setCurrentPage(1);
-  }, [searchQuery]);
+    fetchPantryItems(selectedCategories, currentPage, searchQuery);
+  }, [currentPage, selectedCategories, searchQuery]);
 
-  useEffect(() => {
-    // Filter items whenever searchQuery changes
-    const filtered = pantryItems.filter((item) =>
-      item.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setFilteredItems(filtered);
-  }, [searchQuery, pantryItems]);
-
-  const fetchPantryItems = (
-    categoryIds = selectedCategories,
-    page = currentPage,
-    query = searchQuery // Include the search query
-  ) => {
+  const fetchPantryItems = (categoryIds = [], page = 1, query = "") => {
     setLoading(true);
     setError("");
 
     const fetchFunction = categoryIds.length
-      ? () => getPantryItemsByCategory(categoryIds, page, itemsPerPage)
-      : () => getPantryItems(page, itemsPerPage, query); // Pass the search query
+      ? () => getPantryItemsByCategory(categoryIds, page, itemsPerPage, query)
+      : () => getPantryItems(page, itemsPerPage, query);
 
     fetchFunction()
       .then((data) => {
@@ -72,7 +58,12 @@ export const PantryItems = () => {
   const handleCategorySelect = (categoryIds) => {
     setSelectedCategories(categoryIds);
     setCurrentPage(1);
-    fetchPantryItems(categoryIds, 1);
+    fetchPantryItems(categoryIds, 1, searchQuery); // Reset to page 1
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1); // Reset to the first page when searching
   };
 
   const toggleModal = () => setModalOpen(!modalOpen);
@@ -87,6 +78,12 @@ export const PantryItems = () => {
     setDetailsOpen(false);
   };
 
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    setCurrentPage(1);
+    fetchPantryItems(selectedCategories, 1, ""); // Reset to page 1 and clear query
+  };
+
   return (
     <div>
       <Card className="mt-4" outline color="primary">
@@ -97,15 +94,22 @@ export const PantryItems = () => {
               onCategorySelect={handleCategorySelect}
               selectedCategories={selectedCategories}
             />
-            <div>
+            <div className="d-flex align-items-center ms-3">
               <Input
                 type="text"
                 placeholder="Search items..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="ms-3"
+                onChange={handleSearchChange}
                 style={{ maxWidth: "300px" }}
               />
+              <Button
+                color="secondary"
+                size="sm"
+                onClick={handleClearSearch}
+                className="ms-2"
+              >
+                Clear
+              </Button>
             </div>
             <Button
               color="primary"
@@ -122,7 +126,7 @@ export const PantryItems = () => {
               {error}
             </Alert>
           )}
-          {filteredItems.length > 0 ? (
+          {pantryItems.length > 0 ? (
             <>
               <Table
                 bordered
@@ -139,7 +143,7 @@ export const PantryItems = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredItems.map((item, index) => (
+                  {pantryItems.map((item, index) => (
                     <tr
                       key={item.id}
                       onClick={() => openDetailsModal(item)}
@@ -191,7 +195,7 @@ export const PantryItems = () => {
         isOpen={modalOpen}
         toggle={toggleModal}
         refreshPantryItems={() =>
-          fetchPantryItems(selectedCategories, currentPage)
+          fetchPantryItems(selectedCategories, currentPage, searchQuery)
         }
       />
       {selectedProduct && (
@@ -200,7 +204,7 @@ export const PantryItems = () => {
           toggle={closeDetailsModal}
           product={selectedProduct}
           refreshPantryItems={() =>
-            fetchPantryItems(selectedCategories, currentPage)
+            fetchPantryItems(selectedCategories, currentPage, searchQuery)
           }
         />
       )}
