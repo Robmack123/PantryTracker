@@ -20,7 +20,7 @@ export default function NavBar({ loggedInUser, setLoggedInUser }) {
   return (
     <Navbar color="light" light expand="md" fixed="top">
       <NavbarBrand tag={RRNavLink} to="/">
-        🍴PantryPal
+        🍴PantrySync
       </NavbarBrand>
       <NavbarToggler onClick={toggleNavbar} />
       <Collapse isOpen={isOpen} navbar>

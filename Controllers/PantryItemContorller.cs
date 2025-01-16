@@ -22,7 +22,7 @@ namespace PantryTracker.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetPantryItems()
+        public IActionResult GetPantryItems(int page = 1, int pageSize = 10)
         {
             try
             {
@@ -32,12 +32,14 @@ namespace PantryTracker.Controllers
 
                 if (userProfile == null || userProfile.HouseholdId == null)
                 {
-                    Console.WriteLine("User is not part of a household.");
                     return BadRequest(new { Message = "You are not part of a household." });
                 }
 
                 var pantryItems = _dbContext.PantryItems
                     .Where(pi => pi.HouseholdId == userProfile.HouseholdId)
+                    .OrderBy(pi => pi.Name)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
                     .Select(pi => new PantryItemDTO
                     {
                         Id = pi.Id,
@@ -47,8 +49,14 @@ namespace PantryTracker.Controllers
                     })
                     .ToList();
 
-                Console.WriteLine($"Pantry items fetched: {pantryItems.Count}");
-                return Ok(pantryItems);
+                var totalItems = _dbContext.PantryItems
+                    .Count(pi => pi.HouseholdId == userProfile.HouseholdId);
+
+                return Ok(new
+                {
+                    Items = pantryItems,
+                    TotalItems = totalItems
+                });
             }
             catch (Exception ex)
             {
@@ -56,6 +64,7 @@ namespace PantryTracker.Controllers
                 return StatusCode(500, new { Message = "An error occurred.", Exception = ex.Message });
             }
         }
+
 
 
         [HttpPost]
@@ -213,6 +222,59 @@ namespace PantryTracker.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"Error updating pantry item quantity: {ex.Message}");
+                return StatusCode(500, new { Message = "An error occurred.", Exception = ex.Message });
+            }
+        }
+        [HttpGet("recent-activity")]
+        [Authorize]
+        public IActionResult GetRecentActivity()
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var userProfile = _dbContext.UserProfiles
+                    .FirstOrDefault(up => up.IdentityUserId == userId);
+
+                if (userProfile == null || userProfile.HouseholdId == null)
+                {
+                    return BadRequest(new { Message = "You are not part of a household." });
+                }
+
+                // Fetch recent activity (e.g., added/updated items in the last 7 days)
+                var recentItems = _dbContext.PantryItems
+                    .Where(pi => pi.HouseholdId == userProfile.HouseholdId)
+                    .OrderByDescending(pi => pi.UpdatedAt)
+                    .Take(10) // Limit to the most recent 10 items
+                    .Select(pi => new PantryItemDTO
+                    {
+                        Id = pi.Id,
+                        Name = pi.Name,
+                        Quantity = pi.Quantity,
+                        UpdatedAt = pi.UpdatedAt
+                    })
+                    .ToList();
+
+                // Fetch low-stock items
+                var lowStockItems = _dbContext.PantryItems
+                    .Where(pi => pi.HouseholdId == userProfile.HouseholdId && pi.Quantity < 2)
+                    .Select(pi => new PantryItemDTO
+                    {
+                        Id = pi.Id,
+                        Name = pi.Name,
+                        Quantity = pi.Quantity,
+                        UpdatedAt = pi.UpdatedAt
+                    })
+                    .ToList();
+
+                return Ok(new
+                {
+                    RecentActivity = recentItems,
+                    LowStockItems = lowStockItems
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching recent activity: {ex.Message}");
                 return StatusCode(500, new { Message = "An error occurred.", Exception = ex.Message });
             }
         }

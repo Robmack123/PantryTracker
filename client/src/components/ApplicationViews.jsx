@@ -4,6 +4,7 @@ import Login from "./auth/Login";
 import Register from "./auth/Register";
 import ManageHousehold from "./household/ManageHousehold";
 import { PantryItems } from "./pantry/PantryItems";
+import { HomePage } from "./homepage/Homepage";
 
 export default function ApplicationViews({ loggedInUser, setLoggedInUser }) {
   return (
@@ -12,7 +13,9 @@ export default function ApplicationViews({ loggedInUser, setLoggedInUser }) {
         <Route
           index
           element={
-            <AuthorizedRoute loggedInUser={loggedInUser}></AuthorizedRoute>
+            <AuthorizedRoute loggedInUser={loggedInUser}>
+              <HomePage />
+            </AuthorizedRoute>
           }
         />
         <Route

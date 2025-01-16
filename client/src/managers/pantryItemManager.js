@@ -1,7 +1,7 @@
 const apiUrl = "/api/pantryitem";
 
-export const getPantryItems = () => {
-  return fetch(`${apiUrl}`, {
+export const getPantryItems = (page = 1, pageSize = 10) => {
+  return fetch(`${apiUrl}?page=${page}&pageSize=${pageSize}`, {
     method: "GET",
     credentials: "include", // Ensures the user's session cookie is sent with the request
     headers: {
@@ -15,15 +15,22 @@ export const getPantryItems = () => {
   });
 };
 
-export const getPantryItemsByCategory = (categoryIds) => {
+export const getPantryItemsByCategory = (
+  categoryIds,
+  page = 1,
+  pageSize = 10
+) => {
   const queryString = categoryIds.map((id) => `categoryIds=${id}`).join("&");
-  return fetch(`${apiUrl}/by-category?${queryString}`, {
-    method: "GET",
-    credentials: "include", // Ensures cookies are sent with the request
-    headers: {
-      "Content-Type": "application/json",
-    },
-  }).then((res) => {
+  return fetch(
+    `${apiUrl}/by-category?${queryString}&page=${page}&pageSize=${pageSize}`,
+    {
+      method: "GET",
+      credentials: "include", // Ensures cookies are sent with the request
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  ).then((res) => {
     if (!res.ok) {
       throw new Error("Failed to fetch pantry items by category.");
     }
