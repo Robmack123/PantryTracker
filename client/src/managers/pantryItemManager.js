@@ -1,7 +1,10 @@
 const apiUrl = "/api/pantryitem";
 
-export const getPantryItems = (page = 1, pageSize = 10) => {
-  return fetch(`${apiUrl}?page=${page}&pageSize=${pageSize}`, {
+export const getPantryItems = (page = 1, pageSize = 10, searchQuery = "") => {
+  const query = `page=${page}&pageSize=${pageSize}${
+    searchQuery ? `&searchQuery=${encodeURIComponent(searchQuery)}` : ""
+  }`;
+  return fetch(`${apiUrl}?${query}`, {
     method: "GET",
     credentials: "include", // Ensures the user's session cookie is sent with the request
     headers: {

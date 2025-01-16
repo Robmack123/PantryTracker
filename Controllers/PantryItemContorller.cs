@@ -22,7 +22,7 @@ namespace PantryTracker.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetPantryItems(int page = 1, int pageSize = 10)
+        public IActionResult GetPantryItems(int page = 1, int pageSize = 10, string searchQuery = null)
         {
             try
             {
@@ -35,8 +35,16 @@ namespace PantryTracker.Controllers
                     return BadRequest(new { Message = "You are not part of a household." });
                 }
 
-                var pantryItems = _dbContext.PantryItems
-                    .Where(pi => pi.HouseholdId == userProfile.HouseholdId)
+                var query = _dbContext.PantryItems
+                    .Where(pi => pi.HouseholdId == userProfile.HouseholdId);
+
+                // Apply search query if provided (case-insensitive)
+                if (!string.IsNullOrEmpty(searchQuery))
+                {
+                    query = query.Where(pi => pi.Name.ToLower().Contains(searchQuery.ToLower()));
+                }
+
+                var pantryItems = query
                     .OrderBy(pi => pi.Name)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
@@ -49,8 +57,7 @@ namespace PantryTracker.Controllers
                     })
                     .ToList();
 
-                var totalItems = _dbContext.PantryItems
-                    .Count(pi => pi.HouseholdId == userProfile.HouseholdId);
+                var totalItems = query.Count();
 
                 return Ok(new
                 {
@@ -64,6 +71,8 @@ namespace PantryTracker.Controllers
                 return StatusCode(500, new { Message = "An error occurred.", Exception = ex.Message });
             }
         }
+
+
 
 
 

@@ -32,8 +32,9 @@ export const PantryItems = () => {
   const itemsPerPage = 10;
 
   useEffect(() => {
-    fetchPantryItems();
-  }, [currentPage]);
+    fetchPantryItems(selectedCategories, 1, searchQuery); // Reset to page 1 when search query changes
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   useEffect(() => {
     // Filter items whenever searchQuery changes
@@ -45,24 +46,20 @@ export const PantryItems = () => {
 
   const fetchPantryItems = (
     categoryIds = selectedCategories,
-    page = currentPage
+    page = currentPage,
+    query = searchQuery // Include the search query
   ) => {
     setLoading(true);
     setError("");
 
     const fetchFunction = categoryIds.length
       ? () => getPantryItemsByCategory(categoryIds, page, itemsPerPage)
-      : () => getPantryItems(page, itemsPerPage);
+      : () => getPantryItems(page, itemsPerPage, query); // Pass the search query
 
     fetchFunction()
       .then((data) => {
-        if (Array.isArray(data)) {
-          setPantryItems(data);
-          setTotalItems(data.length); // Assume totalItems matches array length
-        } else {
-          setPantryItems(data.items || []);
-          setTotalItems(data.totalItems || 0);
-        }
+        setPantryItems(data.items || []);
+        setTotalItems(data.totalItems || 0);
         setLoading(false);
       })
       .catch((err) => {
