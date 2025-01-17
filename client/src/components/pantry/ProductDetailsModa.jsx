@@ -12,6 +12,7 @@ import {
 import {
   updatePantryItemQuantity,
   deletePantryItem,
+  toggleMonitorLowStock,
 } from "../../managers/pantryItemManager";
 
 export const ProductDetailsModal = ({
@@ -21,6 +22,9 @@ export const ProductDetailsModal = ({
   refreshPantryItems,
 }) => {
   const [quantity, setQuantity] = useState(product.quantity);
+  const [monitorLowStock, setMonitorLowStock] = useState(
+    product.monitorLowStock
+  );
   const [error, setError] = useState("");
 
   const handleUpdateQuantity = (change) => {
@@ -55,6 +59,19 @@ export const ProductDetailsModal = ({
       .catch((err) => {
         console.error("Error deleting pantry item:", err);
         setError("Failed to delete the item. Please try again.");
+      });
+  };
+
+  const handleToggleMonitorLowStock = () => {
+    setError("");
+    toggleMonitorLowStock(product.id)
+      .then((response) => {
+        setMonitorLowStock(response.monitorLowStock); // Update the local state
+        refreshPantryItems(); // Refresh the main list
+      })
+      .catch((err) => {
+        console.error("Error toggling MonitorLowStock:", err);
+        setError("Failed to update monitoring status. Please try again.");
       });
   };
 
@@ -99,6 +116,16 @@ export const ProductDetailsModal = ({
               +
             </Button>
           </div>
+        </FormGroup>
+        <FormGroup check className="mt-3">
+          <Label check>
+            <Input
+              type="checkbox"
+              checked={monitorLowStock}
+              onChange={handleToggleMonitorLowStock}
+            />{" "}
+            Monitor for Low Stock
+          </Label>
         </FormGroup>
       </ModalBody>
       <ModalFooter>

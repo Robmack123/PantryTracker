@@ -18,7 +18,7 @@ namespace PantryTracker.Models
 
         [Required]
         public int HouseholdId { get; set; }
-
+        public bool MonitorLowStock { get; set; } = true;
         // Navigation properties
         public Household Household { get; set; }
         public ICollection<Category> Categories { get; set; }

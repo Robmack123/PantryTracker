@@ -73,7 +73,7 @@ export const updatePantryItemQuantity = (itemId, dto) => {
 };
 
 export const deletePantryItem = (id) => {
-  return fetch(`/api/pantryitem/${id}`, {
+  return fetch(`${apiUrl}/${id}`, {
     method: "DELETE",
     credentials: "include", // Ensures the user's session cookie is sent with the request
     headers: {
@@ -82,6 +82,21 @@ export const deletePantryItem = (id) => {
   }).then((res) => {
     if (!res.ok) {
       throw new Error("Failed to delete pantry item.");
+    }
+    return res.json();
+  });
+};
+
+export const toggleMonitorLowStock = (id) => {
+  return fetch(`${apiUrl}/${id}/toggle-monitor`, {
+    method: "PUT",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  }).then((res) => {
+    if (!res.ok) {
+      throw new Error("Failed to toggle MonitorLowStock.");
     }
     return res.json();
   });

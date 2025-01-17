@@ -24,7 +24,6 @@ export default function ManageHousehold() {
     // Fetch household members
     getHouseholdUsers()
       .then((data) => {
-        console.log("Household Data:", data);
         setHousehold(data); // Set the household data
         setLoggedInUserId(data.loggedInUserId); // Set the logged-in user's ID from the API
         setLoading(false);
@@ -59,13 +58,6 @@ export default function ManageHousehold() {
   if (error) {
     return <Alert color="danger">{error}</Alert>;
   }
-
-  console.log("Logged-in User ID:", loggedInUserId, typeof loggedInUserId);
-  console.log(
-    "Household Admin User ID:",
-    household?.adminUserId,
-    typeof household?.adminUserId
-  );
 
   return (
     <Card className="mt-4">

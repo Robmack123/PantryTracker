@@ -151,7 +151,9 @@ export const PantryItems = () => {
                       style={{
                         cursor: "pointer",
                         backgroundColor:
-                          item.quantity < 2 ? "#fff6f6" : "inherit", // Highlight low stock items
+                          item.quantity < 2 && item.monitorLowStock
+                            ? "#fff6f6"
+                            : "inherit", // Highlight only if MonitorLowStock is true
                       }}
                       className="table-row-hover"
                     >
@@ -159,8 +161,8 @@ export const PantryItems = () => {
                       <td>{item.name}</td>
                       <td>
                         {item.quantity}{" "}
-                        {item.quantity < 2 && (
-                          <span className="badge bg-danger ms-1">Low</span>
+                        {item.quantity < 2 && item.monitorLowStock && (
+                          <span className="badge bg-danger ms-1">Low</span> // Show badge only if MonitorLowStock is true
                         )}
                       </td>
                       <td>{new Date(item.updatedAt).toLocaleString()}</td>

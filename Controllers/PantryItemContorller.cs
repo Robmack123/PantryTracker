@@ -7,7 +7,6 @@ using System.Linq;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 
-
 namespace PantryTracker.Controllers
 {
     [ApiController]
@@ -38,7 +37,6 @@ namespace PantryTracker.Controllers
                 var query = _dbContext.PantryItems
                     .Where(pi => pi.HouseholdId == userProfile.HouseholdId);
 
-                // Apply search query if provided (case-insensitive)
                 if (!string.IsNullOrEmpty(searchQuery))
                 {
                     query = query.Where(pi => pi.Name.ToLower().Contains(searchQuery.ToLower()));
@@ -53,7 +51,8 @@ namespace PantryTracker.Controllers
                         Id = pi.Id,
                         Name = pi.Name,
                         Quantity = pi.Quantity,
-                        UpdatedAt = pi.UpdatedAt
+                        UpdatedAt = pi.UpdatedAt,
+                        MonitorLowStock = pi.MonitorLowStock // Include MonitorLowStock
                     })
                     .ToList();
 
@@ -72,10 +71,6 @@ namespace PantryTracker.Controllers
             }
         }
 
-
-
-
-
         [HttpPost]
         [Authorize]
         public IActionResult AddOrUpdatePantryItem([FromBody] PantryItemDTO pantryItemDto)
@@ -91,7 +86,6 @@ namespace PantryTracker.Controllers
                     return BadRequest(new { Message = "You are not part of a household." });
                 }
 
-                // Check if the item already exists in the household's pantry
                 var existingItem = _dbContext.PantryItems
                     .Include(pi => pi.Categories)
                     .FirstOrDefault(pi =>
@@ -100,9 +94,9 @@ namespace PantryTracker.Controllers
 
                 if (existingItem != null)
                 {
-                    // If it exists, increase the quantity and update the timestamp
                     existingItem.Quantity += pantryItemDto.Quantity;
                     existingItem.UpdatedAt = DateTime.UtcNow;
+                    existingItem.MonitorLowStock = pantryItemDto.MonitorLowStock; // Update MonitorLowStock
 
                     if (pantryItemDto.CategoryIds != null && pantryItemDto.CategoryIds.Count > 0)
                     {
@@ -129,9 +123,10 @@ namespace PantryTracker.Controllers
                         Quantity = pantryItemDto.Quantity,
                         UpdatedAt = DateTime.UtcNow,
                         HouseholdId = userProfile.HouseholdId.Value,
+                        MonitorLowStock = pantryItemDto.MonitorLowStock,
                         Categories = _dbContext.Categories
                             .Where(c => pantryItemDto.CategoryIds.Contains(c.Id))
-                            .ToList() // Add relationships during creation
+                            .ToList()
                     };
 
                     _dbContext.PantryItems.Add(newPantryItem);
@@ -144,51 +139,6 @@ namespace PantryTracker.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"Error adding or updating pantry item: {ex.Message}");
-                Console.WriteLine($"Inner Exception: {ex.InnerException?.Message}");
-                return StatusCode(500, new
-                {
-                    Message = "An error occurred.",
-                    Exception = ex.Message,
-                    InnerException = ex.InnerException?.Message
-                });
-            }
-        }
-
-
-        [HttpGet("by-category")]
-        [Authorize]
-        public IActionResult GetPantryItemsByCategory([FromQuery] List<int> categoryIds)
-        {
-            try
-            {
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var userProfile = _dbContext.UserProfiles
-                    .FirstOrDefault(up => up.IdentityUserId == userId);
-
-                if (userProfile == null || userProfile.HouseholdId == null)
-                {
-                    return BadRequest(new { Message = "You are not part of a household." });
-                }
-
-                // Fetch pantry items filtered by category IDs
-                var pantryItems = _dbContext.PantryItems
-                    .Where(pi => pi.HouseholdId == userProfile.HouseholdId)
-                    .Where(pi => pi.Categories.Any(c => categoryIds.Contains(c.Id)))
-                    .Select(pi => new PantryItemDTO
-                    {
-                        Id = pi.Id,
-                        Name = pi.Name,
-                        Quantity = pi.Quantity,
-                        UpdatedAt = pi.UpdatedAt,
-                        CategoryIds = pi.Categories.Select(c => c.Id).ToList()
-                    })
-                    .ToList();
-
-                return Ok(pantryItems);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error fetching pantry items by category: {ex.Message}");
                 return StatusCode(500, new { Message = "An error occurred.", Exception = ex.Message });
             }
         }
@@ -234,6 +184,45 @@ namespace PantryTracker.Controllers
                 return StatusCode(500, new { Message = "An error occurred.", Exception = ex.Message });
             }
         }
+
+        [HttpGet("by-category")]
+        [Authorize]
+        public IActionResult GetPantryItemsByCategory([FromQuery] List<int> categoryIds)
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var userProfile = _dbContext.UserProfiles
+                    .FirstOrDefault(up => up.IdentityUserId == userId);
+
+                if (userProfile == null || userProfile.HouseholdId == null)
+                {
+                    return BadRequest(new { Message = "You are not part of a household." });
+                }
+
+                var pantryItems = _dbContext.PantryItems
+                    .Where(pi => pi.HouseholdId == userProfile.HouseholdId)
+                    .Where(pi => pi.Categories.Any(c => categoryIds.Contains(c.Id)))
+                    .Select(pi => new PantryItemDTO
+                    {
+                        Id = pi.Id,
+                        Name = pi.Name,
+                        Quantity = pi.Quantity,
+                        UpdatedAt = pi.UpdatedAt,
+                        CategoryIds = pi.Categories.Select(c => c.Id).ToList(),
+                        MonitorLowStock = pi.MonitorLowStock
+                    })
+                    .ToList();
+
+                return Ok(pantryItems);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching pantry items by category: {ex.Message}");
+                return StatusCode(500, new { Message = "An error occurred.", Exception = ex.Message });
+            }
+        }
+
         [HttpGet("recent-activity")]
         [Authorize]
         public IActionResult GetRecentActivity()
@@ -249,21 +238,20 @@ namespace PantryTracker.Controllers
                     return BadRequest(new { Message = "You are not part of a household." });
                 }
 
-                // Fetch recent activity (e.g., added/updated items in the last 7 days)
                 var recentItems = _dbContext.PantryItems
                     .Where(pi => pi.HouseholdId == userProfile.HouseholdId)
                     .OrderByDescending(pi => pi.UpdatedAt)
-                    .Take(10) // Limit to the most recent 10 items
+                    .Take(10)
                     .Select(pi => new PantryItemDTO
                     {
                         Id = pi.Id,
                         Name = pi.Name,
                         Quantity = pi.Quantity,
-                        UpdatedAt = pi.UpdatedAt
+                        UpdatedAt = pi.UpdatedAt,
+                        MonitorLowStock = pi.MonitorLowStock
                     })
                     .ToList();
 
-                // Fetch low-stock items
                 var lowStockItems = _dbContext.PantryItems
                     .Where(pi => pi.HouseholdId == userProfile.HouseholdId && pi.Quantity < 2)
                     .Select(pi => new PantryItemDTO
@@ -271,7 +259,8 @@ namespace PantryTracker.Controllers
                         Id = pi.Id,
                         Name = pi.Name,
                         Quantity = pi.Quantity,
-                        UpdatedAt = pi.UpdatedAt
+                        UpdatedAt = pi.UpdatedAt,
+                        MonitorLowStock = pi.MonitorLowStock
                     })
                     .ToList();
 
@@ -323,5 +312,39 @@ namespace PantryTracker.Controllers
             }
         }
 
+        [HttpPut("{id}/toggle-monitor")]
+        [Authorize]
+        public IActionResult ToggleMonitorLowStock(int id)
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var userProfile = _dbContext.UserProfiles
+                    .FirstOrDefault(up => up.IdentityUserId == userId);
+
+                if (userProfile == null || userProfile.HouseholdId == null)
+                {
+                    return BadRequest(new { Message = "You are not part of a household." });
+                }
+
+                var pantryItem = _dbContext.PantryItems
+                    .FirstOrDefault(pi => pi.Id == id && pi.HouseholdId == userProfile.HouseholdId);
+
+                if (pantryItem == null)
+                {
+                    return NotFound(new { Message = "Pantry item not found or does not belong to your household." });
+                }
+
+                pantryItem.MonitorLowStock = !pantryItem.MonitorLowStock;
+                _dbContext.SaveChanges();
+
+                return Ok(new { Message = "MonitorLowStock toggled successfully.", MonitorLowStock = pantryItem.MonitorLowStock });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error toggling MonitorLowStock: {ex.Message}");
+                return StatusCode(500, new { Message = "An error occurred.", Exception = ex.Message });
+            }
+        }
     }
 }

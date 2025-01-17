@@ -17,6 +17,7 @@ export const AddPantryItemModal = ({ isOpen, toggle, refreshPantryItems }) => {
   const [itemName, setItemName] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [monitorLowStock, setMonitorLowStock] = useState(true); // New state
   const [error, setError] = useState("");
 
   // Reset modal state when closed
@@ -25,6 +26,7 @@ export const AddPantryItemModal = ({ isOpen, toggle, refreshPantryItems }) => {
       setItemName("");
       setQuantity(1);
       setSelectedCategories([]);
+      setMonitorLowStock(true); // Reset toggle
       setError("");
     }
   }, [isOpen]);
@@ -37,6 +39,7 @@ export const AddPantryItemModal = ({ isOpen, toggle, refreshPantryItems }) => {
       name: itemName,
       quantity: parseInt(quantity, 10),
       categoryIds: selectedCategories,
+      monitorLowStock, // Include monitorLowStock
     };
 
     addOrUpdatePantryItem(newItem)
@@ -79,10 +82,18 @@ export const AddPantryItemModal = ({ isOpen, toggle, refreshPantryItems }) => {
           </FormGroup>
           <FormGroup>
             <Label>Categories</Label>
-            {/* Updated CategoryDropdown */}
             <CategoryDropdown
               onCategorySelect={setSelectedCategories}
               selectedCategories={selectedCategories}
+            />
+          </FormGroup>
+          <FormGroup>
+            <Label for="monitorLowStock">Monitor Low Stock</Label>
+            <Input
+              type="checkbox"
+              id="monitorLowStock"
+              checked={monitorLowStock}
+              onChange={(e) => setMonitorLowStock(e.target.checked)}
             />
           </FormGroup>
           <ModalFooter>
