@@ -40,8 +40,8 @@ export const ProductDetailsModal = ({
 
     updatePantryItemQuantity(product.id, dto)
       .then(() => {
-        refreshPantryItems(); // Refresh the main list
-        toggle(); // Close the modal
+        refreshPantryItems();
+        toggle();
       })
       .catch((err) => {
         console.error("Error updating quantity:", err);
@@ -53,8 +53,8 @@ export const ProductDetailsModal = ({
     setError("");
     deletePantryItem(product.id)
       .then(() => {
-        refreshPantryItems(); // Refresh the main list
-        toggle(); // Close the modal
+        refreshPantryItems();
+        toggle();
       })
       .catch((err) => {
         console.error("Error deleting pantry item:", err);
@@ -66,8 +66,8 @@ export const ProductDetailsModal = ({
     setError("");
     toggleMonitorLowStock(product.id)
       .then((response) => {
-        setMonitorLowStock(response.monitorLowStock); // Update the local state
-        refreshPantryItems(); // Refresh the main list
+        setMonitorLowStock(response.monitorLowStock);
+        refreshPantryItems();
       })
       .catch((err) => {
         console.error("Error toggling MonitorLowStock:", err);

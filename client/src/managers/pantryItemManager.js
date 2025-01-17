@@ -6,7 +6,7 @@ export const getPantryItems = (page = 1, pageSize = 10, searchQuery = "") => {
   }`;
   return fetch(`${apiUrl}?${query}`, {
     method: "GET",
-    credentials: "include", // Ensures the user's session cookie is sent with the request
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
@@ -28,7 +28,7 @@ export const getPantryItemsByCategory = (
     `${apiUrl}/by-category?${queryString}&page=${page}&pageSize=${pageSize}`,
     {
       method: "GET",
-      credentials: "include", // Ensures cookies are sent with the request
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
       },
@@ -75,7 +75,7 @@ export const updatePantryItemQuantity = (itemId, dto) => {
 export const deletePantryItem = (id) => {
   return fetch(`${apiUrl}/${id}`, {
     method: "DELETE",
-    credentials: "include", // Ensures the user's session cookie is sent with the request
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },

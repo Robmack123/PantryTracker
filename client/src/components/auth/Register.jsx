@@ -1,7 +1,19 @@
 import { useState } from "react";
 import { register } from "../../managers/authManager";
 import { Link, useNavigate } from "react-router-dom";
-import { Button, FormFeedback, FormGroup, Input, Label } from "reactstrap";
+import {
+  Button,
+  Form,
+  FormGroup,
+  Input,
+  Label,
+  FormFeedback,
+  Card,
+  CardBody,
+  CardTitle,
+  Row,
+  Col,
+} from "reactstrap";
 
 export default function Register({ setLoggedInUser }) {
   const [firstName, setFirstName] = useState("");
@@ -21,30 +33,27 @@ export default function Register({ setLoggedInUser }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate password matching
     if (password !== confirmPassword) {
       setPasswordMismatch(true);
       return;
     }
 
-    // Validate household inputs
     if (joinCode && newHouseholdName) {
       setErrorMessage(
-        "Please provide either a join code to join an existing household or a name to create a new household, but not both."
+        "Provide either a join code or a new household name, not both."
       );
       return;
     }
 
     if (!joinCode && !newHouseholdName) {
       setErrorMessage(
-        "Please provide a join code to join an existing household or a name to create a new household."
+        "Provide a join code or a name to create a new household."
       );
       return;
     }
 
     setErrorMessage("");
 
-    // Create user object
     const newUser = {
       firstName,
       lastName,
@@ -55,7 +64,6 @@ export default function Register({ setLoggedInUser }) {
     };
 
     try {
-      // Register the user
       const user = await register(newUser);
       if (user) {
         setLoggedInUser(user);
@@ -68,91 +76,120 @@ export default function Register({ setLoggedInUser }) {
   };
 
   return (
-    <div className="container" style={{ maxWidth: "500px" }}>
-      <h3>Sign Up</h3>
-      <FormGroup>
-        <Label>First Name</Label>
-        <Input
-          type="text"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-        />
-      </FormGroup>
-      <FormGroup>
-        <Label>Last Name</Label>
-        <Input
-          type="text"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-        />
-      </FormGroup>
-      <FormGroup>
-        <Label>Email</Label>
-        <Input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </FormGroup>
-      <FormGroup>
-        <Label>Password</Label>
-        <Input
-          invalid={passwordMismatch}
-          type="password"
-          value={password}
-          onChange={(e) => {
-            setPasswordMismatch(false);
-            setPassword(e.target.value);
-          }}
-        />
-      </FormGroup>
-      <FormGroup>
-        <Label>Confirm Password</Label>
-        <Input
-          invalid={passwordMismatch}
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => {
-            setPasswordMismatch(false);
-            setConfirmPassword(e.target.value);
-          }}
-        />
-        <FormFeedback>Passwords do not match!</FormFeedback>
-      </FormGroup>
-      <FormGroup>
-        <Label>Join an Existing Household (Join Code)</Label>
-        <Input
-          type="text"
-          value={joinCode}
-          onChange={(e) => setJoinCode(e.target.value)}
-          disabled={!!newHouseholdName} // Disable if creating a new household
-        />
-      </FormGroup>
-      <FormGroup>
-        <Label>Create a New Household (Name)</Label>
-        <Input
-          type="text"
-          value={newHouseholdName}
-          onChange={(e) => setNewHouseholdName(e.target.value)}
-          disabled={!!joinCode} // Disable if joining an existing household
-        />
-      </FormGroup>
-      <p style={{ color: "red" }} hidden={!errorMessage}>
-        {errorMessage}
-      </p>
-      <p style={{ color: "red" }} hidden={!registrationFailure}>
-        Registration Failure
-      </p>
-      <Button
-        color="primary"
-        onClick={handleSubmit}
-        disabled={passwordMismatch}
-      >
-        Register
-      </Button>
-      <p>
-        Already signed up? Log in <Link to="/login">here</Link>
-      </p>
+    <div className="d-flex justify-content-center align-items-center mt-5">
+      <Card className="shadow-sm" style={{ maxWidth: "500px", width: "100%" }}>
+        <CardBody>
+          <CardTitle tag="h3" className="text-center text-primary mb-4">
+            Sign Up
+          </CardTitle>
+          <Form onSubmit={handleSubmit}>
+            <FormGroup>
+              <Label for="firstName">First Name</Label>
+              <Input
+                id="firstName"
+                type="text"
+                value={firstName}
+                placeholder="Enter your first name"
+                onChange={(e) => setFirstName(e.target.value)}
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label for="lastName">Last Name</Label>
+              <Input
+                id="lastName"
+                type="text"
+                value={lastName}
+                placeholder="Enter your last name"
+                onChange={(e) => setLastName(e.target.value)}
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label for="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                placeholder="Enter your email"
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label for="password">Password</Label>
+              <Input
+                id="password"
+                invalid={passwordMismatch}
+                type="password"
+                value={password}
+                placeholder="Enter your password"
+                onChange={(e) => {
+                  setPasswordMismatch(false);
+                  setPassword(e.target.value);
+                }}
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label for="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                invalid={passwordMismatch}
+                type="password"
+                value={confirmPassword}
+                placeholder="Confirm your password"
+                onChange={(e) => {
+                  setPasswordMismatch(false);
+                  setConfirmPassword(e.target.value);
+                }}
+              />
+              {passwordMismatch && (
+                <FormFeedback>Passwords do not match!</FormFeedback>
+              )}
+            </FormGroup>
+            <FormGroup>
+              <Label for="joinCode">
+                Join an Existing Household (Join Code)
+              </Label>
+              <Input
+                id="joinCode"
+                type="text"
+                value={joinCode}
+                placeholder="Enter join code"
+                onChange={(e) => setJoinCode(e.target.value)}
+                disabled={!!newHouseholdName}
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label for="newHouseholdName">
+                Create a New Household (Name)
+              </Label>
+              <Input
+                id="newHouseholdName"
+                type="text"
+                value={newHouseholdName}
+                placeholder="Enter household name"
+                onChange={(e) => setNewHouseholdName(e.target.value)}
+                disabled={!!joinCode}
+              />
+            </FormGroup>
+            {errorMessage && <p className="text-danger">{errorMessage}</p>}
+            {registrationFailure && (
+              <p className="text-danger">Registration Failure</p>
+            )}
+            <Button color="primary" block type="submit">
+              Register
+            </Button>
+          </Form>
+          <Row className="mt-3 text-center">
+            <Col>
+              <p className="mb-0">
+                Already signed up?{" "}
+                <Link to="/login" className="text-primary">
+                  Log in here
+                </Link>
+              </p>
+            </Col>
+          </Row>
+        </CardBody>
+      </Card>
     </div>
   );
 }

@@ -11,22 +11,21 @@ import {
   Input,
 } from "reactstrap";
 import { addOrUpdatePantryItem } from "../../managers/pantryItemManager";
-import { CategoryDropdown } from "./CategoryFilter"; // Use updated dropdown
+import { CategoryDropdown } from "./CategoryFilter";
 
 export const AddPantryItemModal = ({ isOpen, toggle, refreshPantryItems }) => {
   const [itemName, setItemName] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [selectedCategories, setSelectedCategories] = useState([]);
-  const [monitorLowStock, setMonitorLowStock] = useState(true); // New state
+  const [monitorLowStock, setMonitorLowStock] = useState(true);
   const [error, setError] = useState("");
 
-  // Reset modal state when closed
   useEffect(() => {
     if (!isOpen) {
       setItemName("");
       setQuantity(1);
       setSelectedCategories([]);
-      setMonitorLowStock(true); // Reset toggle
+      setMonitorLowStock(true);
       setError("");
     }
   }, [isOpen]);
@@ -35,17 +34,22 @@ export const AddPantryItemModal = ({ isOpen, toggle, refreshPantryItems }) => {
     e.preventDefault();
     setError("");
 
+    if (selectedCategories.length === 0) {
+      setError("Please select at least one category.");
+      return;
+    }
+
     const newItem = {
       name: itemName,
       quantity: parseInt(quantity, 10),
       categoryIds: selectedCategories,
-      monitorLowStock, // Include monitorLowStock
+      monitorLowStock,
     };
 
     addOrUpdatePantryItem(newItem)
       .then(() => {
-        refreshPantryItems(); // Refresh the pantry list
-        toggle(); // Close the modal
+        refreshPantryItems();
+        toggle();
       })
       .catch((err) => {
         console.error("Error adding pantry item:", err);
@@ -86,6 +90,11 @@ export const AddPantryItemModal = ({ isOpen, toggle, refreshPantryItems }) => {
               onCategorySelect={setSelectedCategories}
               selectedCategories={selectedCategories}
             />
+            {selectedCategories.length === 0 && (
+              <p className="text-danger mt-2">
+                Please select at least one category.
+              </p>
+            )}
           </FormGroup>
           <FormGroup>
             <Label for="monitorLowStock">Monitor Low Stock</Label>

@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { getRecentActivity } from "../../managers/homeManager";
-import { Card, CardBody, CardTitle, Alert } from "reactstrap";
+import {
+  Card,
+  CardBody,
+  CardTitle,
+  Alert,
+  ListGroup,
+  ListGroupItem,
+  Badge,
+} from "reactstrap";
+import "./HomePage.css"; // Custom CSS file for additional styling
 
 export const HomePage = () => {
   const [recentActivity, setRecentActivity] = useState([]);
@@ -19,7 +28,10 @@ export const HomePage = () => {
     getRecentActivity()
       .then((data) => {
         setRecentActivity((data.recentActivity || []).slice(0, 5)); // Limit to 5 most recent
-        setLowStockItems(data.lowStockItems || []);
+        const monitoredLowStock = (data.lowStockItems || []).filter(
+          (item) => item.monitorLowStock
+        );
+        setLowStockItems(monitoredLowStock);
         setLoading(false);
       })
       .catch((err) => {
@@ -30,48 +42,59 @@ export const HomePage = () => {
   };
 
   return (
-    <div>
-      <Card className="mt-4">
+    <div className="homepage-container">
+      <Card className="mt-4 shadow-sm">
         <CardBody>
-          <CardTitle tag="h3">Dashboard</CardTitle>
-          {loading && <p>Loading data...</p>}
+          <CardTitle tag="h3" className="text-center text-primary mb-4">
+            Dashboard
+          </CardTitle>
+          {loading && <p className="text-center text-muted">Loading data...</p>}
           {error && (
-            <Alert color="danger" timeout={3000}>
+            <Alert color="danger" className="text-center">
               {error}
             </Alert>
           )}
-          {/* Recent Activity Section */}
-          <div className="mt-3">
-            <h4>Recent Activity</h4>
+          <div className="activity-section">
+            <h4 className="text-secondary">Recent Activity</h4>
             {recentActivity.length > 0 ? (
-              <ul>
+              <ListGroup className="mt-3">
                 {recentActivity.map((item) => (
-                  <li key={item.id}>
+                  <ListGroupItem key={item.id}>
                     {item.quantity > 0
-                      ? `${item.name} has been added on ${new Date(
+                      ? `${item.name} was added on ${new Date(
                           item.updatedAt
                         ).toLocaleString()}.`
                       : `${item.name} is low on stock.`}
-                  </li>
+                  </ListGroupItem>
                 ))}
-              </ul>
+              </ListGroup>
             ) : (
-              !loading && <p>No recent activity found.</p>
+              !loading && (
+                <p className="text-muted">No recent activity found.</p>
+              )
             )}
           </div>
-          {/* Low Stock Items Section */}
-          <div className="mt-4">
-            <h4>Low Stock Items</h4>
+          <div className="low-stock-section mt-4">
+            <h4 className="text-secondary">Low Stock Items</h4>
             {lowStockItems.length > 0 ? (
-              <ul>
+              <ListGroup className="mt-3">
                 {lowStockItems.map((item) => (
-                  <li key={item.id}>
-                    {item.name} is low on stock with only {item.quantity} left.
-                  </li>
+                  <ListGroupItem
+                    key={item.id}
+                    className="d-flex justify-content-between align-items-center"
+                  >
+                    <span>
+                      {item.name} is low on stock with only{" "}
+                      <Badge color="danger" pill>
+                        {item.quantity}
+                      </Badge>{" "}
+                      left.
+                    </span>
+                  </ListGroupItem>
                 ))}
-              </ul>
+              </ListGroup>
             ) : (
-              <p>No items are low on stock.</p>
+              <p className="text-muted">No items are low on stock.</p>
             )}
           </div>
         </CardBody>

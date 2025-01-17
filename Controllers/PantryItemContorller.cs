@@ -52,7 +52,7 @@ namespace PantryTracker.Controllers
                         Name = pi.Name,
                         Quantity = pi.Quantity,
                         UpdatedAt = pi.UpdatedAt,
-                        MonitorLowStock = pi.MonitorLowStock // Include MonitorLowStock
+                        MonitorLowStock = pi.MonitorLowStock
                     })
                     .ToList();
 
@@ -253,7 +253,7 @@ namespace PantryTracker.Controllers
                     .ToList();
 
                 var lowStockItems = _dbContext.PantryItems
-                    .Where(pi => pi.HouseholdId == userProfile.HouseholdId && pi.Quantity < 2)
+                    .Where(pi => pi.HouseholdId == userProfile.HouseholdId && pi.Quantity < 3 && pi.MonitorLowStock)
                     .Select(pi => new PantryItemDTO
                     {
                         Id = pi.Id,

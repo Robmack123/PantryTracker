@@ -23,20 +23,20 @@ export const CategoryDropdown = ({
     const selectedIds = selectedOptions
       ? selectedOptions.map((option) => option.value)
       : [];
-    onCategorySelect(selectedIds); // Pass selected IDs to parent
+    onCategorySelect(selectedIds);
   };
 
   return (
     <Select
-      options={categories} // Dropdown options
-      isMulti // Enable multi-selection
+      options={categories}
+      isMulti
       value={categories.filter((category) =>
         selectedCategories.includes(category.value)
-      )} // Show selected categories
-      onChange={handleChange} // Handle selection change
+      )}
+      onChange={handleChange}
       placeholder="Select categories..."
-      closeMenuOnSelect={false} // Keep menu open after selection
-      menuPlacement="auto" // Adjust dropdown placement dynamically
+      closeMenuOnSelect={false}
+      menuPlacement="auto"
     />
   );
 };
