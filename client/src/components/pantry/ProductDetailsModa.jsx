@@ -9,7 +9,10 @@ import {
   Label,
   Input,
 } from "reactstrap";
-import { updatePantryItemQuantity } from "../../managers/pantryItemManager";
+import {
+  updatePantryItemQuantity,
+  deletePantryItem,
+} from "../../managers/pantryItemManager";
 
 export const ProductDetailsModal = ({
   isOpen,
@@ -39,6 +42,19 @@ export const ProductDetailsModal = ({
       .catch((err) => {
         console.error("Error updating quantity:", err);
         setError("Failed to update the quantity. Please try again.");
+      });
+  };
+
+  const handleDelete = () => {
+    setError("");
+    deletePantryItem(product.id)
+      .then(() => {
+        refreshPantryItems(); // Refresh the main list
+        toggle(); // Close the modal
+      })
+      .catch((err) => {
+        console.error("Error deleting pantry item:", err);
+        setError("Failed to delete the item. Please try again.");
       });
   };
 
@@ -88,6 +104,9 @@ export const ProductDetailsModal = ({
       <ModalFooter>
         <Button color="primary" onClick={handleSave}>
           Save Changes
+        </Button>
+        <Button color="danger" onClick={handleDelete}>
+          Delete Item
         </Button>
         <Button color="secondary" onClick={toggle}>
           Close

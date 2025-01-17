@@ -71,3 +71,18 @@ export const updatePantryItemQuantity = (itemId, dto) => {
     return res.json();
   });
 };
+
+export const deletePantryItem = (id) => {
+  return fetch(`/api/pantryitem/${id}`, {
+    method: "DELETE",
+    credentials: "include", // Ensures the user's session cookie is sent with the request
+    headers: {
+      "Content-Type": "application/json",
+    },
+  }).then((res) => {
+    if (!res.ok) {
+      throw new Error("Failed to delete pantry item.");
+    }
+    return res.json();
+  });
+};

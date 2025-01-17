@@ -288,5 +288,40 @@ namespace PantryTracker.Controllers
             }
         }
 
+        [HttpDelete("{id}")]
+        [Authorize]
+        public IActionResult DeletePantryItem(int id)
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var userProfile = _dbContext.UserProfiles
+                    .FirstOrDefault(up => up.IdentityUserId == userId);
+
+                if (userProfile == null || userProfile.HouseholdId == null)
+                {
+                    return BadRequest(new { Message = "You are not part of a household." });
+                }
+
+                var pantryItem = _dbContext.PantryItems
+                    .FirstOrDefault(pi => pi.Id == id && pi.HouseholdId == userProfile.HouseholdId);
+
+                if (pantryItem == null)
+                {
+                    return NotFound(new { Message = "Pantry item not found or does not belong to your household." });
+                }
+
+                _dbContext.PantryItems.Remove(pantryItem);
+                _dbContext.SaveChanges();
+
+                return Ok(new { Message = "Pantry item deleted successfully." });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting pantry item: {ex.Message}");
+                return StatusCode(500, new { Message = "An error occurred.", Exception = ex.Message });
+            }
+        }
+
     }
 }

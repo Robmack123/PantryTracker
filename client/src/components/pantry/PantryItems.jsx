@@ -44,12 +44,13 @@ export const PantryItems = () => {
 
     fetchFunction()
       .then((data) => {
-        setPantryItems(data.items || []);
-        setTotalItems(data.totalItems || 0);
+        const items = Array.isArray(data) ? data : data.items || [];
+        setPantryItems(items);
+        setTotalItems(data.totalItems || items.length);
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Error fetching pantry items:", err);
+        console.error("Error fetching pantry items:", err); // Log the error
         setError("Failed to load pantry items.");
         setLoading(false);
       });
@@ -58,7 +59,7 @@ export const PantryItems = () => {
   const handleCategorySelect = (categoryIds) => {
     setSelectedCategories(categoryIds);
     setCurrentPage(1);
-    fetchPantryItems(categoryIds, 1, searchQuery); // Reset to page 1
+    fetchPantryItems(categoryIds, 1, searchQuery);
   };
 
   const handleSearchChange = (e) => {
@@ -134,7 +135,7 @@ export const PantryItems = () => {
                 className="table-light table-hover w-100 custom-table"
                 style={{ fontSize: "1.2rem" }}
               >
-                <thead>
+                <thead className="table-primary">
                   <tr>
                     <th>#</th>
                     <th>Name</th>
@@ -147,11 +148,21 @@ export const PantryItems = () => {
                     <tr
                       key={item.id}
                       onClick={() => openDetailsModal(item)}
-                      style={{ cursor: "pointer" }}
+                      style={{
+                        cursor: "pointer",
+                        backgroundColor:
+                          item.quantity < 2 ? "#fff6f6" : "inherit", // Highlight low stock items
+                      }}
+                      className="table-row-hover"
                     >
                       <td>{index + 1 + (currentPage - 1) * itemsPerPage}</td>
                       <td>{item.name}</td>
-                      <td>{item.quantity}</td>
+                      <td>
+                        {item.quantity}{" "}
+                        {item.quantity < 2 && (
+                          <span className="badge bg-danger ms-1">Low</span>
+                        )}
+                      </td>
                       <td>{new Date(item.updatedAt).toLocaleString()}</td>
                     </tr>
                   ))}
