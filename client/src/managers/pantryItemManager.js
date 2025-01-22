@@ -101,3 +101,23 @@ export const toggleMonitorLowStock = (id) => {
     return res.json();
   });
 };
+
+export const searchBrandedFood = (name, limit = 10, page = 1) => {
+  return fetch(
+    `/api/pantryitem/search-branded?name=${encodeURIComponent(
+      name
+    )}&limit=${limit}&page=${page}`,
+    {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  ).then((res) => {
+    if (!res.ok) {
+      throw new Error("Failed to fetch branded food items.");
+    }
+    return res.json();
+  });
+};

@@ -1,0 +1,38 @@
+/* Limit the modal width */
+.modal-lg {
+  max-width: 70%; /* Reduce the maximum width */
+  margin: auto; /* Center the modal */
+}
+
+@media (max-width: 768px) {
+  .modal-lg {
+    max-width: 90%; /* Allow more space on smaller screens */
+  }
+
+  .modal-body {
+    padding: 15px; /* Reduce padding for smaller screens */
+  }
+
+  .modal-footer {
+    justify-content: center; /* Center buttons on smaller screens */
+  }
+}
+
+/* Ensure consistent width for inputs and buttons */
+.modal-body input,
+.modal-body button {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+/* Table responsive adjustments */
+.modal-body table {
+  width: 100%;
+  margin-top: 10px;
+  font-size: 0.9rem; /* Slightly smaller font for tables */
+}
+
+.modal-body th,
+.modal-body td {
+  text-align: left;
+}

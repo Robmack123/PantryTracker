@@ -1,3 +1,5 @@
+using System.Net.Http;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PantryTracker.Data;
@@ -14,10 +16,12 @@ namespace PantryTracker.Controllers
     public class PantryItemController : ControllerBase
     {
         private readonly PantryTrackerDbContext _dbContext;
+        private readonly HttpClient _httpClient;
 
-        public PantryItemController(PantryTrackerDbContext dbContext)
+        public PantryItemController(PantryTrackerDbContext dbContext, HttpClient httpClient)
         {
             _dbContext = dbContext;
+            _httpClient = httpClient; // Injected HttpClient
         }
 
         [HttpGet]
@@ -346,5 +350,110 @@ namespace PantryTracker.Controllers
                 return StatusCode(500, new { Message = "An error occurred.", Exception = ex.Message });
             }
         }
+
+        [HttpGet("search-branded")]
+        [Authorize]
+        public async Task<IActionResult> SearchBrandedFood(string name, int limit = 10, int page = 1)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return BadRequest(new { Message = "Food name cannot be empty." });
+            }
+
+            // Get the API key from environment variables
+            var apiKey = Environment.GetEnvironmentVariable("CHOMP_API_KEY");
+
+            if (string.IsNullOrEmpty(apiKey))
+            {
+                return StatusCode(500, new { Message = "API key is not configured. Please set CHOMP_API_KEY in the environment variables." });
+            }
+
+            // Construct the API URL
+            var url = $"https://chompthis.com/api/v2/food/branded/name.php?api_key={apiKey}&name={Uri.EscapeDataString(name)}&limit={limit}&page={page}";
+
+            try
+            {
+                // Make the API request
+                var response = await _httpClient.GetAsync(url);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return StatusCode((int)response.StatusCode, new { Message = "Failed to fetch food data from the external API." });
+                }
+
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                var foodData = JsonSerializer.Deserialize<object>(jsonResponse); // Adjust deserialization as needed
+
+                return Ok(foodData); // Return the API response
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"Error calling external API: {ex.Message}");
+                return StatusCode(500, new { Message = "An error occurred while fetching food data.", Details = ex.Message });
+            }
+        }
+
+        [HttpGet("advanced-search")]
+        [Authorize]
+        public async Task<IActionResult> AdvancedSearchBrandedFood(
+    string keyword,
+    string category = null,
+    string diet = null,
+    int limit = 10,
+    int page = 1)
+        {
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                return BadRequest(new { Message = "Keyword cannot be empty." });
+            }
+
+            // Get the API key from environment variables
+            var apiKey = Environment.GetEnvironmentVariable("CHOMP_API_KEY");
+
+            if (string.IsNullOrEmpty(apiKey))
+            {
+                return StatusCode(500, new { Message = "API key is not configured. Please set CHOMP_API_KEY in the environment variables." });
+            }
+
+            // Build query string
+            var queryParams = new List<string>
+    {
+        $"api_key={apiKey}",
+        $"keyword={Uri.EscapeDataString(keyword)}",
+        $"limit={limit}",
+        $"page={page}"
+    };
+
+            if (!string.IsNullOrEmpty(category))
+                queryParams.Add($"category={Uri.EscapeDataString(category)}");
+
+            if (!string.IsNullOrEmpty(diet))
+                queryParams.Add($"diet={Uri.EscapeDataString(diet)}");
+
+            var queryString = string.Join("&", queryParams);
+            var url = $"https://chompthis.com/api/v2/food/branded/search.php?{queryString}";
+
+            try
+            {
+                var response = await _httpClient.GetAsync(url);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return StatusCode((int)response.StatusCode, new { Message = "Failed to fetch food data from the external API." });
+                }
+
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                var foodData = JsonSerializer.Deserialize<object>(jsonResponse); // Adjust deserialization as needed
+
+                return Ok(foodData);
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"Error calling external API: {ex.Message}");
+                return StatusCode(500, new { Message = "An error occurred while fetching food data.", Details = ex.Message });
+            }
+        }
+
+
     }
 }

@@ -2,22 +2,20 @@ import { Table } from "reactstrap";
 
 export const PantryTable = ({
   pantryItems,
-  currentPage,
-  itemsPerPage,
+
   onRowClick,
 }) => (
   <div className="table-container">
-    <Table bordered hover className="table-light table-hover custom-table">
+    <Table striped hover className="table-light table-hover custom-table">
       <thead className="table-primary">
         <tr>
-          <th>#</th>
           <th>Name</th>
           <th>Quantity</th>
           <th>Last Updated</th>
         </tr>
       </thead>
       <tbody>
-        {pantryItems.map((item, index) => (
+        {pantryItems.map((item) => (
           <tr
             key={item.id}
             onClick={() => onRowClick(item)}
@@ -29,7 +27,6 @@ export const PantryTable = ({
                   : "inherit",
             }}
           >
-            <td>{index + 1 + (currentPage - 1) * itemsPerPage}</td>
             <td>{item.name}</td>
             <td>
               {item.quantity}{" "}

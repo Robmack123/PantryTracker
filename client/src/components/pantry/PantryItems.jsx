@@ -8,6 +8,7 @@ import { PantryHeader } from "./PantryHeader";
 import { PantryTable } from "./PantryTable";
 import { PaginationControls } from "./PaginationControls";
 import { AddPantryItemModal } from "./AddPantryItemModal";
+import { SearchPantryItemModal } from "./SearchPantryItemModal";
 import { ProductDetailsModal } from "./ProductDetailsModa";
 import "./pantryList.css";
 
@@ -15,7 +16,8 @@ export const PantryItems = () => {
   const [pantryItems, setPantryItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [modalOpen, setModalOpen] = useState(false);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -50,7 +52,8 @@ export const PantryItems = () => {
       });
   };
 
-  const toggleModal = () => setModalOpen(!modalOpen);
+  const toggleAddModal = () => setAddModalOpen(!addModalOpen);
+  const toggleSearchModal = () => setSearchModalOpen(!searchModalOpen);
 
   const openDetailsModal = (product) => {
     setSelectedProduct(product);
@@ -60,6 +63,11 @@ export const PantryItems = () => {
   const closeDetailsModal = () => {
     setSelectedProduct(null);
     setDetailsOpen(false);
+  };
+
+  const handleItemSelect = (item) => {
+    console.log("Selected item:", item);
+    toggleSearchModal();
   };
 
   return (
@@ -76,7 +84,8 @@ export const PantryItems = () => {
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               onClearSearch={() => setSearchQuery("")}
-              toggleAddModal={toggleModal}
+              toggleAddModal={toggleAddModal}
+              toggleSearchModal={toggleSearchModal}
             />
             {loading && <p>Loading pantry items...</p>}
             {error && <Alert color="danger">{error}</Alert>}
@@ -100,11 +109,16 @@ export const PantryItems = () => {
         </Card>
       </Container>
       <AddPantryItemModal
-        isOpen={modalOpen}
-        toggle={toggleModal}
+        isOpen={addModalOpen}
+        toggle={toggleAddModal}
         refreshPantryItems={() =>
           fetchPantryItems(selectedCategories, currentPage, searchQuery)
         }
+      />
+      <SearchPantryItemModal
+        isOpen={searchModalOpen}
+        toggle={toggleSearchModal}
+        onSelectItem={handleItemSelect}
       />
       {selectedProduct && (
         <ProductDetailsModal
