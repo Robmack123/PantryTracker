@@ -1,6 +1,6 @@
-# Pantry Tracker
+# PantrySync
 
-Pantry Tracker is a web application designed for families and shared households to manage pantry items efficiently. The app helps prevent duplicate purchases and notifies users when items are low on stock. It simplifies household inventory management and encourages collaboration among members.
+PantrySync is a web application designed for families and shared households to manage pantry items efficiently. The app helps prevent duplicate purchases and notifies users when items are low on stock. It simplifies household inventory management and encourages collaboration among members.
 
 ## Table of Contents
 
@@ -14,8 +14,6 @@ Pantry Tracker is a web application designed for families and shared households 
   - [Alternative Configuration](#alternative-configuration)
 - [Usage](#usage)
 - [External API](#external-api)
-- [Contributing](#contributing)
-- [License](#license)
 - [Acknowledgments](#acknowledgments)
 
 ---
@@ -83,7 +81,7 @@ To run this project locally, follow these steps:
 
    ```bash
    git clone https://github.com/yourusername/pantry-tracker.git
-   cd pantry-tracker/backend
+   cd pantry-tracker
    ```
 
 2. Set up your environment variables:
@@ -110,7 +108,7 @@ To run this project locally, follow these steps:
 1. Navigate to the frontend directory:
 
    ```bash
-   cd ../frontend
+   cd client
    ```
 
 2. Install dependencies:
@@ -204,6 +202,8 @@ Pantry Tracker integrates with ChompAPI to fetch product data. To use this featu
 
 1. Obtain an API key from ChompAPI.
 2. Add the API key to the `appsettings.json` file or use environment variables as described above.
+
+---
 
 ## Acknowledgments
 
