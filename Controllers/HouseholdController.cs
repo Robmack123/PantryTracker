@@ -122,4 +122,92 @@ public class HouseholdController : ControllerBase
             return StatusCode(500, new { Message = "An error occurred.", Exception = ex.Message });
         }
     }
+    // POST /api/household/create
+    [HttpPost("create")]
+    [Authorize]
+    public IActionResult CreateHousehold([FromBody] CreateHouseholdDto dto)
+    {
+        // Log incoming payload
+        Console.WriteLine($"[CreateHousehold] Received payload: Name={dto?.Name}, AdminUserId={dto?.AdminUserId}");
+
+        // Validate the payload
+        if (dto == null)
+        {
+            Console.WriteLine("[CreateHousehold] Error: Received null payload.");
+            return BadRequest(new { Message = "Invalid payload." });
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.Name))
+        {
+            Console.WriteLine("[CreateHousehold] Error: Household Name is missing.");
+            return BadRequest(new { Message = "The Name field is required." });
+        }
+
+        if (dto.AdminUserId == 0)
+        {
+            Console.WriteLine("[CreateHousehold] Error: AdminUserId is missing.");
+            return BadRequest(new { Message = "The AdminUserId field is required." });
+        }
+
+        try
+        {
+            // Generate a unique join code
+            Console.WriteLine("[CreateHousehold] Generating unique join code...");
+            string joinCode;
+            do
+            {
+                joinCode = Guid.NewGuid().ToString().Substring(0, 8).ToUpper();
+            } while (_dbContext.Households.Any(h => h.JoinCode == joinCode));
+
+            // Map DTO to Household
+            var newHousehold = new Household
+            {
+                Name = dto.Name,
+                AdminUserId = dto.AdminUserId,
+                JoinCode = joinCode,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            // Add the household to the database
+            _dbContext.Households.Add(newHousehold);
+            _dbContext.SaveChanges();
+
+            Console.WriteLine($"[CreateHousehold] Household created successfully with ID={newHousehold.Id}");
+
+            // Assign the creator to the household
+            var creator = _dbContext.UserProfiles.FirstOrDefault(up => up.Id == dto.AdminUserId);
+            if (creator == null)
+            {
+                Console.WriteLine("[CreateHousehold] Error: Admin user not found.");
+                return NotFound(new { Message = "Admin user not found." });
+            }
+
+            creator.HouseholdId = newHousehold.Id;
+            _dbContext.UserProfiles.Update(creator);
+            _dbContext.SaveChanges();
+
+            Console.WriteLine($"[CreateHousehold] Admin user (ID={creator.Id}) assigned to household (ID={newHousehold.Id})");
+
+            // Return success response
+            return Ok(new
+            {
+                HouseholdId = newHousehold.Id,
+                HouseholdName = newHousehold.Name,
+                JoinCode = newHousehold.JoinCode,
+                AdminUserId = newHousehold.AdminUserId
+            });
+        }
+        catch (Exception ex)
+        {
+            // Log unexpected errors
+            Console.WriteLine($"[CreateHousehold] Error creating household: {ex.Message}");
+            return StatusCode(500, new { Message = "An error occurred.", Exception = ex.Message });
+        }
+    }
+
+
+
+
+
+
 }

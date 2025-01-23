@@ -11,7 +11,7 @@ public class Household
 
     public DateTime CreatedAt { get; set; }
 
-    [Required]
+
     public string JoinCode { get; set; }
 
     public int AdminUserId { get; set; }

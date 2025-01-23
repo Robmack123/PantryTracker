@@ -28,7 +28,13 @@ export default function Login({ setLoggedInUser }) {
         setFailedLogin(true);
       } else {
         setLoggedInUser(user);
-        navigate("/");
+        if (user.householdId === null) {
+          // Redirect to household selection page
+          navigate("/household-selection");
+        } else {
+          // Redirect to main page
+          navigate("/");
+        }
       }
     });
   };
