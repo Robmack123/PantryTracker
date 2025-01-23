@@ -205,6 +205,60 @@ public class HouseholdController : ControllerBase
         }
     }
 
+    [HttpPost("join")]
+    [Authorize]
+    public IActionResult JoinHousehold([FromBody] JoinHouseholdDto dto)
+    {
+        Console.WriteLine($"[JoinHousehold] Received payload: UserId={dto?.UserId}, JoinCode={dto?.JoinCode}");
+
+        if (dto == null || string.IsNullOrWhiteSpace(dto.JoinCode))
+        {
+            Console.WriteLine("[JoinHousehold] Error: Invalid payload or missing join code.");
+            return BadRequest(new { Message = "Invalid payload or join code is required." });
+        }
+
+        try
+        {
+            // Find the household by join code
+            var household = _dbContext.Households.FirstOrDefault(h => h.JoinCode == dto.JoinCode);
+            if (household == null)
+            {
+                Console.WriteLine("[JoinHousehold] Error: Household with the provided join code not found.");
+                return NotFound(new { Message = "Household not found with the provided join code." });
+            }
+
+            // Find the user
+            var user = _dbContext.UserProfiles.FirstOrDefault(u => u.Id == dto.UserId);
+            if (user == null)
+            {
+                Console.WriteLine("[JoinHousehold] Error: User not found.");
+                return NotFound(new { Message = "User not found." });
+            }
+
+            // Update the user's household
+            user.HouseholdId = household.Id;
+            _dbContext.UserProfiles.Update(user);
+            _dbContext.SaveChanges();
+
+            Console.WriteLine($"[JoinHousehold] User (ID={user.Id}) joined household (ID={household.Id})");
+
+            // Return updated user info (optional)
+            return Ok(new
+            {
+                UserId = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                HouseholdId = user.HouseholdId,
+                HouseholdName = household.Name
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[JoinHousehold] Error joining household: {ex.Message}");
+            return StatusCode(500, new { Message = "An error occurred while joining the household.", Exception = ex.Message });
+        }
+    }
+
 
 
 
