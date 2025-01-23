@@ -121,3 +121,18 @@ export const searchBrandedFood = (name, limit = 10, page = 1) => {
     return res.json();
   });
 };
+
+export const updatePantryItemDetails = (id, dto) => {
+  return fetch(`/api/pantryitem/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(dto),
+  }).then((res) => {
+    if (!res.ok) {
+      throw new Error("Failed to update pantry item.");
+    }
+    return res.json();
+  });
+};

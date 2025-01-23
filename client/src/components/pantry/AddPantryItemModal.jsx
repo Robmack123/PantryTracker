@@ -17,6 +17,7 @@ import { SearchPantryItemModal } from "./SearchPantryItemModal";
 export const AddPantryItemModal = ({ isOpen, toggle, refreshPantryItems }) => {
   const [itemName, setItemName] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [lowStockThreshold, setLowStockThreshold] = useState(2); // New state
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [monitorLowStock, setMonitorLowStock] = useState(true);
   const [error, setError] = useState("");
@@ -26,6 +27,7 @@ export const AddPantryItemModal = ({ isOpen, toggle, refreshPantryItems }) => {
     if (!isOpen) {
       setItemName("");
       setQuantity(1);
+      setLowStockThreshold(2); // Reset threshold
       setSelectedCategories([]);
       setMonitorLowStock(true);
       setError("");
@@ -44,6 +46,7 @@ export const AddPantryItemModal = ({ isOpen, toggle, refreshPantryItems }) => {
     const newItem = {
       name: itemName,
       quantity: parseInt(quantity, 10),
+      lowStockThreshold: parseInt(lowStockThreshold, 10), // Include in the payload
       categoryIds: selectedCategories,
       monitorLowStock,
     };
@@ -59,9 +62,6 @@ export const AddPantryItemModal = ({ isOpen, toggle, refreshPantryItems }) => {
       });
   };
 
-  const openSearchModal = () => setSearchModalOpen(true);
-  const closeSearchModal = () => setSearchModalOpen(false);
-
   return (
     <>
       <Modal isOpen={isOpen} toggle={toggle} centered scrollable size="lg">
@@ -72,7 +72,7 @@ export const AddPantryItemModal = ({ isOpen, toggle, refreshPantryItems }) => {
             <Button
               color="secondary"
               className="mb-3"
-              onClick={openSearchModal}
+              onClick={() => setSearchModalOpen(true)}
             >
               Search Pantry Items
             </Button>
@@ -93,6 +93,17 @@ export const AddPantryItemModal = ({ isOpen, toggle, refreshPantryItems }) => {
                 id="quantity"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
+                min="1"
+                required
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label for="lowStockThreshold">Low Stock Threshold</Label>
+              <Input
+                type="number"
+                id="lowStockThreshold"
+                value={lowStockThreshold}
+                onChange={(e) => setLowStockThreshold(e.target.value)}
                 min="1"
                 required
               />
@@ -132,7 +143,7 @@ export const AddPantryItemModal = ({ isOpen, toggle, refreshPantryItems }) => {
 
       <SearchPantryItemModal
         isOpen={searchModalOpen}
-        toggle={closeSearchModal}
+        toggle={() => setSearchModalOpen(false)}
         onSelectItem={(item) => {
           setItemName(item.name);
           setSearchModalOpen(false);

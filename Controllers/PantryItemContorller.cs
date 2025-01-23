@@ -393,66 +393,46 @@ namespace PantryTracker.Controllers
             }
         }
 
-        [HttpGet("advanced-search")]
+        [HttpPut("{id}")]
         [Authorize]
-        public async Task<IActionResult> AdvancedSearchBrandedFood(
-    string keyword,
-    string category = null,
-    string diet = null,
-    int limit = 10,
-    int page = 1)
+        public IActionResult UpdatePantryItemDetails(int id, [FromBody] UpdatePantryItemDTO dto)
         {
-            if (string.IsNullOrWhiteSpace(keyword))
-            {
-                return BadRequest(new { Message = "Keyword cannot be empty." });
-            }
-
-            // Get the API key from environment variables
-            var apiKey = Environment.GetEnvironmentVariable("CHOMP_API_KEY");
-
-            if (string.IsNullOrEmpty(apiKey))
-            {
-                return StatusCode(500, new { Message = "API key is not configured. Please set CHOMP_API_KEY in the environment variables." });
-            }
-
-            // Build query string
-            var queryParams = new List<string>
-    {
-        $"api_key={apiKey}",
-        $"keyword={Uri.EscapeDataString(keyword)}",
-        $"limit={limit}",
-        $"page={page}"
-    };
-
-            if (!string.IsNullOrEmpty(category))
-                queryParams.Add($"category={Uri.EscapeDataString(category)}");
-
-            if (!string.IsNullOrEmpty(diet))
-                queryParams.Add($"diet={Uri.EscapeDataString(diet)}");
-
-            var queryString = string.Join("&", queryParams);
-            var url = $"https://chompthis.com/api/v2/food/branded/search.php?{queryString}";
-
             try
             {
-                var response = await _httpClient.GetAsync(url);
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var userProfile = _dbContext.UserProfiles
+                    .FirstOrDefault(up => up.IdentityUserId == userId);
 
-                if (!response.IsSuccessStatusCode)
+                if (userProfile == null || userProfile.HouseholdId == null)
                 {
-                    return StatusCode((int)response.StatusCode, new { Message = "Failed to fetch food data from the external API." });
+                    return BadRequest(new { Message = "You are not part of a household." });
                 }
 
-                var jsonResponse = await response.Content.ReadAsStringAsync();
-                var foodData = JsonSerializer.Deserialize<object>(jsonResponse); // Adjust deserialization as needed
+                var pantryItem = _dbContext.PantryItems
+                    .FirstOrDefault(pi => pi.Id == id && pi.HouseholdId == userProfile.HouseholdId);
 
-                return Ok(foodData);
+                if (pantryItem == null)
+                {
+                    return NotFound(new { Message = "Pantry item not found or does not belong to your household." });
+                }
+
+                // Update fields
+                pantryItem.Name = dto.Name ?? pantryItem.Name;
+                pantryItem.LowStockThreshold = dto.LowStockThreshold ?? pantryItem.LowStockThreshold;
+                pantryItem.Quantity = dto.Quantity ?? pantryItem.Quantity;
+                pantryItem.UpdatedAt = DateTime.UtcNow;
+
+                _dbContext.SaveChanges();
+
+                return Ok(new { Message = "Pantry item updated successfully." });
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                Console.WriteLine($"Error calling external API: {ex.Message}");
-                return StatusCode(500, new { Message = "An error occurred while fetching food data.", Details = ex.Message });
+                Console.WriteLine($"Error updating pantry item: {ex.Message}");
+                return StatusCode(500, new { Message = "An error occurred.", Exception = ex.Message });
             }
         }
+
 
 
     }

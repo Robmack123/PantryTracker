@@ -10,7 +10,8 @@ import {
   Input,
 } from "reactstrap";
 import {
-  updatePantryItemQuantity,
+  updatePantryItemDetails, // New function to update the name and LowStockThreshold
+  // updatePantryItemQuantity,
   deletePantryItem,
   toggleMonitorLowStock,
 } from "../../managers/pantryItemManager";
@@ -21,7 +22,11 @@ export const ProductDetailsModal = ({
   product,
   refreshPantryItems,
 }) => {
+  const [name, setName] = useState(product.name); // New state for item name
   const [quantity, setQuantity] = useState(product.quantity);
+  const [lowStockThreshold, setLowStockThreshold] = useState(
+    product.lowStockThreshold || 2
+  ); // New state for LowStockThreshold
   const [monitorLowStock, setMonitorLowStock] = useState(
     product.monitorLowStock
   );
@@ -36,16 +41,17 @@ export const ProductDetailsModal = ({
 
   const handleSave = () => {
     setError("");
-    const dto = { quantity };
 
-    updatePantryItemQuantity(product.id, dto)
+    const dto = { name, quantity, lowStockThreshold };
+
+    updatePantryItemDetails(product.id, dto) // Use new manager function
       .then(() => {
         refreshPantryItems();
         toggle();
       })
       .catch((err) => {
-        console.error("Error updating quantity:", err);
-        setError("Failed to update the quantity. Please try again.");
+        console.error("Error updating item details:", err);
+        setError("Failed to save changes. Please try again.");
       });
   };
 
@@ -80,13 +86,15 @@ export const ProductDetailsModal = ({
       <ModalHeader toggle={toggle}>Product Details</ModalHeader>
       <ModalBody>
         {error && <p className="text-danger">{error}</p>}
-        <p>
-          <strong>Item Name:</strong> {product.name}
-        </p>
-        <p>
-          <strong>Added On:</strong>{" "}
-          {new Date(product.updatedAt).toLocaleString()}
-        </p>
+        <FormGroup>
+          <Label for="name">Item Name</Label>
+          <Input
+            type="text"
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </FormGroup>
         <FormGroup>
           <Label for="quantity">Quantity</Label>
           <div className="d-flex align-items-center">
@@ -116,6 +124,19 @@ export const ProductDetailsModal = ({
               +
             </Button>
           </div>
+        </FormGroup>
+        <FormGroup>
+          <Label for="lowStockThreshold">Low Stock Threshold</Label>
+          <Input
+            type="number"
+            id="lowStockThreshold"
+            value={lowStockThreshold}
+            onChange={(e) =>
+              setLowStockThreshold(
+                Math.max(0, parseInt(e.target.value, 10) || 0)
+              )
+            }
+          />
         </FormGroup>
         <FormGroup check className="mt-3">
           <Label check>
