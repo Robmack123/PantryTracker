@@ -40,3 +40,12 @@
 .read-the-docs {
   color: #888;
 }
+body {
+  background-image: url("/images/pantry1.jpg");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  height: 100vh;
+  margin: 0;
+  background-position: center;
+}

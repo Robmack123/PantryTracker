@@ -4,6 +4,8 @@ import Login from "./auth/Login";
 import Register from "./auth/Register";
 import ManageHousehold from "./household/ManageHousehold";
 import { PantryItems } from "./pantry/PantryItems";
+import { HomePage } from "./homepage/Homepage";
+import HouseholdSelection from "./household/HouseholdSelection"; // Import the new component
 
 export default function ApplicationViews({ loggedInUser, setLoggedInUser }) {
   return (
@@ -12,7 +14,9 @@ export default function ApplicationViews({ loggedInUser, setLoggedInUser }) {
         <Route
           index
           element={
-            <AuthorizedRoute loggedInUser={loggedInUser}></AuthorizedRoute>
+            <AuthorizedRoute loggedInUser={loggedInUser}>
+              <HomePage />
+            </AuthorizedRoute>
           }
         />
         <Route
@@ -28,6 +32,17 @@ export default function ApplicationViews({ loggedInUser, setLoggedInUser }) {
           element={
             <AuthorizedRoute loggedInUser={loggedInUser}>
               <ManageHousehold />
+            </AuthorizedRoute>
+          }
+        />
+        <Route
+          path="household-selection"
+          element={
+            <AuthorizedRoute loggedInUser={loggedInUser}>
+              <HouseholdSelection
+                loggedInUser={loggedInUser}
+                setLoggedInUser={setLoggedInUser}
+              />
             </AuthorizedRoute>
           }
         />

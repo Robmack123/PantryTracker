@@ -27,7 +27,7 @@ export const tryGetLoggedInUser = () => {
 };
 
 export const register = (userProfile) => {
-  userProfile.password = btoa(userProfile.password); // Encode the password as Base64
+  userProfile.password = btoa(userProfile.password);
   return fetch("/api/auth/register", {
     credentials: "same-origin",
     method: "POST",

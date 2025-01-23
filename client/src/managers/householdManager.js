@@ -28,3 +28,41 @@ export const removeUserFromHousehold = (userId) => {
     }
   });
 };
+
+export const joinHousehold = (userId, joinCode) => {
+  return fetch(`${_apiUrl}/join`, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ userId, joinCode }),
+  }).then((res) => {
+    if (!res.ok) {
+      throw new Error("Failed to join household.");
+    }
+    return res.json(); // Assuming this returns the updated user
+  });
+};
+
+export const createHousehold = (userId, name) => {
+  console.log("Sending payload:", { name, adminUserId: userId });
+
+  return fetch(`/api/household/create`, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name, adminUserId: userId }),
+  }).then((res) => {
+    if (!res.ok) {
+      console.error("Response error:", res);
+      return res.json().then((error) => {
+        console.error("Error response body:", error);
+        throw new Error(error.message || "Failed to create household.");
+      });
+    }
+    return res.json();
+  });
+};

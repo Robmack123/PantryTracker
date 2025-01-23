@@ -7,4 +7,6 @@ public class PantryItemDTO
     public int Quantity { get; set; }
     public DateTime UpdatedAt { get; set; }
     public List<int> CategoryIds { get; set; }
+    public bool MonitorLowStock { get; set; }
+    public int LowStockThreshold { get; set; }
 }

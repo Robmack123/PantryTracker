@@ -29,6 +29,11 @@ public class AuthController : ControllerBase
     {
         try
         {
+            if (string.IsNullOrWhiteSpace(authHeader) || !authHeader.StartsWith("Basic "))
+            {
+                return BadRequest(new { Message = "Invalid authorization header." });
+            }
+
             string encodedCreds = authHeader.Substring(6).Trim();
             string creds = Encoding
                 .GetEncoding("iso-8859-1")
@@ -36,50 +41,76 @@ public class AuthController : ControllerBase
 
             // Get email and password
             int separator = creds.IndexOf(':');
+            if (separator < 0)
+            {
+                return BadRequest(new { Message = "Invalid credentials format." });
+            }
+
             string email = creds.Substring(0, separator);
             string password = creds.Substring(separator + 1);
 
+            // Retrieve user from the database
             var user = _dbContext.Users.FirstOrDefault(u => u.Email == email);
             if (user == null)
-                return Unauthorized();
+            {
+                return Unauthorized(new { Message = "Invalid email or password." });
+            }
 
-            var userRoles = _dbContext.UserRoles.Where(ur => ur.UserId == user.Id).ToList();
             var hasher = new PasswordHasher<IdentityUser>();
             var result = hasher.VerifyHashedPassword(user, user.PasswordHash, password);
 
-            if (result == PasswordVerificationResult.Success)
+            if (result != PasswordVerificationResult.Success)
             {
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.Name, user.UserName)
-                };
-
-                foreach (var userRole in userRoles)
-                {
-                    var role = _dbContext.Roles.FirstOrDefault(r => r.Id == userRole.RoleId);
-                    if (role != null)
-                    {
-                        claims.Add(new Claim(ClaimTypes.Role, role.Name));
-                    }
-                }
-
-                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-                HttpContext.SignInAsync(
-                    CookieAuthenticationDefaults.AuthenticationScheme,
-                    new ClaimsPrincipal(claimsIdentity)).Wait();
-
-                return Ok();
+                return Unauthorized(new { Message = "Invalid email or password." });
             }
 
-            return Unauthorized();
+            // Retrieve the user's profile and household information
+            var userProfile = _dbContext.UserProfiles.FirstOrDefault(up => up.IdentityUserId == user.Id);
+            if (userProfile == null)
+            {
+                return Unauthorized(new { Message = "User profile not found." });
+            }
+
+            var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Name, user.UserName)
+        };
+
+            // Add roles to claims if any
+            var userRoles = _dbContext.UserRoles.Where(ur => ur.UserId == user.Id).ToList();
+            foreach (var userRole in userRoles)
+            {
+                var role = _dbContext.Roles.FirstOrDefault(r => r.Id == userRole.RoleId);
+                if (role != null)
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, role.Name));
+                }
+            }
+
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+            HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity)).Wait();
+
+            // Return login success with household information
+            return Ok(new
+            {
+                userId = user.Id,
+                firstName = userProfile.FirstName,
+                lastName = userProfile.LastName,
+                householdId = userProfile.HouseholdId, // This will be null if the user is not in a household
+                email = user.Email
+            });
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Error during login: {ex.Message}");
             return StatusCode(500, new { Message = "An error occurred during login.", Exception = ex.Message });
         }
     }
+
 
     [HttpGet("logout")]
     [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
