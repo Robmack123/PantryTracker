@@ -1,4 +1,5 @@
-const _apiUrl = "/api/household";
+const API_BASE_URL = "http://3.147.46.97:5000"; // Replace with your EC2 IP
+const _apiUrl = `${API_BASE_URL}/api/household`;
 
 export const getHouseholdUsers = () => {
   return fetch(`${_apiUrl}/members`, {
@@ -48,7 +49,8 @@ export const joinHousehold = (userId, joinCode) => {
 export const createHousehold = (userId, name) => {
   console.log("Sending payload:", { name, adminUserId: userId });
 
-  return fetch(`/api/household/create`, {
+  return fetch(`${_apiUrl}/create`, {
+    // Updated this line
     method: "POST",
     credentials: "same-origin",
     headers: {
