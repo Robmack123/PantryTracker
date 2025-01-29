@@ -6,11 +6,13 @@ using PantryTracker.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load .env variables
-DotEnv.Load(); // This loads variables from the .env file
+// Load environment variables from .env file
+DotEnv.Load();
 
-// Access a sample variable for demonstration (like an API key)
+// Retrieve environment variables
 var chompApiKey = Environment.GetEnvironmentVariable("CHOMP_API_KEY");
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+var adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
 
 // Add services to the container.
 builder.Services.AddControllers().AddJsonOptions(opts =>
@@ -47,23 +49,28 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 builder.Services.AddIdentityCore<IdentityUser>(config =>
-            {
-                // For demonstration only - change these for other projects
-                config.Password.RequireDigit = false;
-                config.Password.RequiredLength = 8;
-                config.Password.RequireLowercase = false;
-                config.Password.RequireNonAlphanumeric = false;
-                config.Password.RequireUppercase = false;
-                config.User.RequireUniqueEmail = true;
-            })
+    {
+        // Adjust password requirements for production if needed
+        config.Password.RequireDigit = false;
+        config.Password.RequiredLength = 8;
+        config.Password.RequireLowercase = false;
+        config.Password.RequireNonAlphanumeric = false;
+        config.Password.RequireUppercase = false;
+        config.User.RequireUniqueEmail = true;
+    })
     .AddRoles<IdentityRole>()  // Add the role service  
     .AddEntityFrameworkStores<PantryTrackerDbContext>();
 
 // Allows passing datetimes without time zone data 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
-// Allows our API endpoints to access the database through Entity Framework Core
-builder.Services.AddNpgsql<PantryTrackerDbContext>(builder.Configuration["PantryTrackerDbConnectionString"]);
+// Configure database connection using environment variable
+if (string.IsNullOrEmpty(databaseUrl))
+{
+    throw new InvalidOperationException("DATABASE_URL environment variable is not set.");
+}
+
+builder.Services.AddNpgsql<PantryTrackerDbContext>(databaseUrl);
 
 var app = builder.Build();
 
