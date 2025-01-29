@@ -1,4 +1,5 @@
-const _apiUrl = "/api/auth";
+const API_BASE_URL = "http://3.147.46.97:5000"; // Replace with your EC2 IP
+const _apiUrl = `${API_BASE_URL}/api/auth`;
 
 export const login = (email, password) => {
   return fetch(_apiUrl + "/login", {
@@ -28,7 +29,7 @@ export const tryGetLoggedInUser = () => {
 
 export const register = (userProfile) => {
   userProfile.password = btoa(userProfile.password);
-  return fetch("/api/auth/register", {
+  return fetch(`${_apiUrl}/register`, {
     credentials: "same-origin",
     method: "POST",
     headers: {
