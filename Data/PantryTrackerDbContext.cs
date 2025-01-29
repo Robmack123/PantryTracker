@@ -51,14 +51,15 @@ public class PantryTrackerDbContext : IdentityDbContext<IdentityUser>
             RoleId = "c3aaeb97-d2ba-4a53-a521-4eea61e59b35",
             UserId = "dbc40bc6-0829-4ac5-a3ed-180f5e916a5f"
         });
+
         modelBuilder.Entity<UserProfile>().HasData(new UserProfile
         {
             Id = 1,
             IdentityUserId = "dbc40bc6-0829-4ac5-a3ed-180f5e916a5f",
             FirstName = "Admina",
             LastName = "Strator",
-
         });
+
         modelBuilder.Entity<Household>().HasData(new Household
         {
             Id = 1,
@@ -67,38 +68,53 @@ public class PantryTrackerDbContext : IdentityDbContext<IdentityUser>
             JoinCode = "ADMIN123",
             AdminUserId = 1
         });
+
+        // Adding all categories
         modelBuilder.Entity<Category>().HasData(
-           new Category { Id = 1, Name = "Dairy" },
-           new Category { Id = 2, Name = "Snacks" },
-           new Category { Id = 3, Name = "Beverages" },
-           new Category { Id = 4, Name = "Produce" }
-       );
+            new Category { Id = 1, Name = "Dairy" },
+            new Category { Id = 2, Name = "Snacks" },
+            new Category { Id = 3, Name = "Beverages" },
+            new Category { Id = 4, Name = "Produce" },
+            new Category { Id = 5, Name = "Canned Goods" },
+            new Category { Id = 6, Name = "Condiments & Sauces" },
+            new Category { Id = 7, Name = "Dry Goods" },
+            new Category { Id = 8, Name = "Proteins" },
+            new Category { Id = 9, Name = "Baking Supplies" },
+            new Category { Id = 10, Name = "Breakfast Foods" },
+            new Category { Id = 11, Name = "Frozen Foods" },
+            new Category { Id = 12, Name = "Spices & Seasonings" },
+            new Category { Id = 13, Name = "Oils & Fats" },
+            new Category { Id = 14, Name = "Prepared Foods" }
+        );
+
         modelBuilder.Entity<PantryItem>().HasData(
-             new PantryItem
-             {
-                 Id = 1,
-                 Name = "Milk",
-                 Quantity = 2,
-                 UpdatedAt = DateTime.UtcNow,
-                 HouseholdId = 1,
-             },
-             new PantryItem
-             {
-                 Id = 2,
-                 Name = "Cheese",
-                 Quantity = 5,
-                 UpdatedAt = DateTime.UtcNow,
-                 HouseholdId = 1,
-             },
-             new PantryItem
-             {
-                 Id = 3,
-                 Name = "Bread",
-                 Quantity = 3,
-                 UpdatedAt = DateTime.UtcNow,
-                 HouseholdId = 1,
-             }
-         );
+            new PantryItem
+            {
+                Id = 1,
+                Name = "Milk",
+                Quantity = 2,
+                UpdatedAt = DateTime.UtcNow,
+                HouseholdId = 1,
+            },
+            new PantryItem
+            {
+                Id = 2,
+                Name = "Cheese",
+                Quantity = 5,
+                UpdatedAt = DateTime.UtcNow,
+                HouseholdId = 1,
+            },
+            new PantryItem
+            {
+                Id = 3,
+                Name = "Bread",
+                Quantity = 3,
+                UpdatedAt = DateTime.UtcNow,
+                HouseholdId = 1,
+            }
+        );
+
+        // Mapping pantry items to categories
         modelBuilder.Entity<PantryItem>()
             .HasMany(pi => pi.Categories)
             .WithMany(c => c.PantryItems)
@@ -106,6 +122,6 @@ public class PantryTrackerDbContext : IdentityDbContext<IdentityUser>
                 new { PantryItemsId = 1, CategoriesId = 1 }, // Milk -> Dairy
                 new { PantryItemsId = 2, CategoriesId = 1 }, // Cheese -> Dairy
                 new { PantryItemsId = 3, CategoriesId = 4 }  // Bread -> Produce
-         ));
+        ));
     }
 }
