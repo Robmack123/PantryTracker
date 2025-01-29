@@ -1,8 +1,7 @@
-const API_BASE_URL = "http://3.147.46.97:5000"; // Replace with your EC2 IP
-const apiUrl = `${API_BASE_URL}/api/category`;
+const apiUrl = "/api/category";
 
 export const getCategories = () => {
-  return fetch(apiUrl, {
+  return fetch(`${apiUrl}`, {
     method: "GET",
     credentials: "include",
     headers: {

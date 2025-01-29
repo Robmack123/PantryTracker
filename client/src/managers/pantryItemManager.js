@@ -1,5 +1,4 @@
-const API_BASE_URL = "http://3.147.46.97:5000"; // Replace with your EC2 IP
-const apiUrl = `${API_BASE_URL}/api/pantryitem`;
+const apiUrl = "/api/pantryitem";
 
 export const getPantryItems = (page = 1, pageSize = 10, searchQuery = "") => {
   const query = `page=${page}&pageSize=${pageSize}${
@@ -105,7 +104,7 @@ export const toggleMonitorLowStock = (id) => {
 
 export const searchBrandedFood = (name, limit = 10, page = 1) => {
   return fetch(
-    `${API_BASE_URL}/api/pantryitem/search-branded?name=${encodeURIComponent(
+    `/api/pantryitem/search-branded?name=${encodeURIComponent(
       name
     )}&limit=${limit}&page=${page}`,
     {
@@ -124,7 +123,7 @@ export const searchBrandedFood = (name, limit = 10, page = 1) => {
 };
 
 export const updatePantryItemDetails = (id, dto) => {
-  return fetch(`${API_BASE_URL}/api/pantryitem/${id}`, {
+  return fetch(`/api/pantryitem/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
