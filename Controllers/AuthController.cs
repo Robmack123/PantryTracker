@@ -72,10 +72,10 @@ public class AuthController : ControllerBase
             }
 
             var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Name, user.UserName)
-        };
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.UserName)
+            };
 
             // Add roles to claims if any
             var userRoles = _dbContext.UserRoles.Where(ur => ur.UserId == user.Id).ToList();
@@ -111,7 +111,6 @@ public class AuthController : ControllerBase
         }
     }
 
-
     [HttpGet("logout")]
     [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
     public IActionResult Logout()
@@ -131,7 +130,6 @@ public class AuthController : ControllerBase
     [Authorize]
     public IActionResult Me()
     {
-
         if (User.Identity?.IsAuthenticated != true)
         {
             return Unauthorized(new { Message = "You are not authenticated" });
@@ -239,10 +237,10 @@ public class AuthController : ControllerBase
 
             // Step 4: Sign in the user
             var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Name, user.UserName)
-        };
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.UserName)
+            };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
@@ -269,8 +267,4 @@ public class AuthController : ControllerBase
         } while (_dbContext.Households.Any(h => h.JoinCode == joinCode));
         return joinCode;
     }
-
-
-
-
 }
