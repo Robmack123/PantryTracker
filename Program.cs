@@ -69,11 +69,19 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 // 🔹 Get database connection string from environment variables
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+
 if (string.IsNullOrEmpty(databaseUrl))
 {
+    Console.WriteLine("DATABASE_URL is missing in Azure.");
     throw new InvalidOperationException("DATABASE_URL environment variable is missing.");
 }
+else
+{
+    Console.WriteLine($"DATABASE_URL is: {databaseUrl}");
+}
+
 builder.Services.AddNpgsql<PantryTrackerDbContext>(databaseUrl);
+
 
 var app = builder.Build();
 
