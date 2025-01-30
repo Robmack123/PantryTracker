@@ -38,8 +38,8 @@ public class PantryTrackerDbContext : IdentityDbContext<IdentityUser>
             NormalizedName = "admin"
         });
 
-        // Ensure admin password is loaded from configuration
-        var adminPassword = _configuration["AdminPassword"];
+        // Ensure admin password is loaded from configuration (accessing the correct environment variable)
+        var adminPassword = _configuration["ADMIN_PASSWORD"];  // Use the correct key here
         if (string.IsNullOrEmpty(adminPassword))
         {
             throw new InvalidOperationException("Admin password is not set in the configuration.");
