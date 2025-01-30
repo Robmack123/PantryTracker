@@ -6,18 +6,22 @@ using PantryTracker.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Kestrel server configuration to ONLY support HTTPS
+// 🔹 Add Kestrel server configuration for both HTTPS and required Azure port (8080)
 builder.WebHost.ConfigureKestrel(options =>
 {
-    // Remove HTTP binding completely (only bind to HTTPS)
+    // Keep HTTPS binding
     options.ListenAnyIP(5001, listenOptions =>
     {
-        listenOptions.UseHttps(); // Make sure it only listens on HTTPS
+        listenOptions.UseHttps(); // Ensure HTTPS is enabled
     });
+
+    // 🔹 Add explicit binding to port 8080 (needed for Azure)
+    options.ListenAnyIP(8080);
 });
 
-// Add services to the container
-DotEnv.Load(); // This loads variables from the .env file
+// Load environment variables from .env file
+DotEnv.Load();
+
 builder.Services.AddControllers().AddJsonOptions(opts =>
 {
     opts.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
@@ -30,17 +34,19 @@ builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// 🔹 Configure authentication with cookie-based login
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
     {
         options.Cookie.Name = "PantryTrackerLoginCookie";
         options.Cookie.SameSite = SameSiteMode.Strict;
         options.Cookie.HttpOnly = true;
-        options.Cookie.MaxAge = new TimeSpan(7, 0, 0, 0); // Cookie expires in a week
-        options.SlidingExpiration = true; // Extend cookie lifetime with activity up to 7 days
-        options.ExpireTimeSpan = new TimeSpan(24, 0, 0); // Cookie expires in 24 hours
+        options.Cookie.MaxAge = TimeSpan.FromDays(7); // Cookie expires in a week
+        options.SlidingExpiration = true;
+        options.ExpireTimeSpan = TimeSpan.FromHours(24); // Cookie expires in 24 hours
     });
 
+// Configure IdentityCore for user authentication
 builder.Services.AddIdentityCore<IdentityUser>(config =>
 {
     config.Password.RequireDigit = false;
@@ -53,26 +59,31 @@ builder.Services.AddIdentityCore<IdentityUser>(config =>
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<PantryTrackerDbContext>();
 
-// Allow passing datetimes without time zone data 
+// Allow passing datetimes without time zone data
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
-var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
+// 🔹 Get database connection string from environment variables
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 builder.Services.AddNpgsql<PantryTrackerDbContext>(databaseUrl);
 
 var app = builder.Build();
 
-// Ensure HTTPS redirection
+// 🔹 Ensure HTTPS redirection
 app.UseHttpsRedirection();
 
+// 🔹 Enable Swagger in development mode
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+// 🔹 Ensure authentication & authorization are correctly applied
 app.UseAuthentication();
 app.UseAuthorization();
 
+// 🔹 Map controllers
 app.MapControllers();
 
+// 🔹 Start the application
 app.Run();
