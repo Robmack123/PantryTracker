@@ -97,8 +97,16 @@ app.Lifetime.ApplicationStarted.Register(() =>
     Console.WriteLine("🚀 PantryTracker API has started successfully!");
 });
 
-// 🔹 Map controllers
+
 app.MapControllers();
 
-// 🔹 Start the application
-app.Run();
+try
+{
+    app.Run();
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"FATAL ERROR: {ex.Message}");
+    Console.WriteLine(ex.StackTrace);
+    throw;
+}
