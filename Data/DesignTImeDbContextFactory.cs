@@ -1,8 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;  // Ensure this namespace is included
+using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using System.IO;
-
 
 namespace PantryTracker.Data
 {
@@ -15,19 +14,27 @@ namespace PantryTracker.Data
             // Set up configuration to load environment variables
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory()) // This points to your project directory
-                .AddJsonFile("appsettings.json", optional: true)
-                .AddEnvironmentVariables() // Load environment variables
+                .AddJsonFile("appsettings.json", optional: true) // Optional if you want appsettings as well
+                .AddEnvironmentVariables() // Ensure environment variables are loaded from .env
                 .Build();
 
-            // Get the database connection string from environment variables
-            var databaseUrl = configuration["DATABASE_URL"];
+            // Check if the AdminPassword is available
+            var adminPassword = configuration["ADMIN_PASSWORD"];
+            if (string.IsNullOrEmpty(adminPassword))
+            {
+                throw new InvalidOperationException("Admin password is not set in the configuration.");
+            }
 
+            // Log the password for debugging (remove this after confirming it's working)
+            Console.WriteLine($"Loaded Admin Password: {adminPassword}");
+
+            var databaseUrl = configuration["DATABASE_URL"];
             if (string.IsNullOrEmpty(databaseUrl))
             {
                 throw new InvalidOperationException("DATABASE_URL environment variable is not set.");
             }
 
-            // Configure the DbContext with the connection string
+            // Configure DbContext with the connection string
             optionsBuilder.UseNpgsql(databaseUrl);
 
             return new PantryTrackerDbContext(optionsBuilder.Options, configuration);
