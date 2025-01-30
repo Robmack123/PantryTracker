@@ -66,7 +66,6 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 // Get the database connection string from the .env file
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
-// Allow the app to access the PostgreSQL database through Entity Framework Core
 builder.Services.AddNpgsql<PantryTrackerDbContext>(databaseUrl);
 
 var app = builder.Build();
