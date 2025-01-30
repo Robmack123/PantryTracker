@@ -7,7 +7,7 @@ using PantryTracker.Data;
 var builder = WebApplication.CreateBuilder(args);
 
 // Load environment variables from .env file
-DotEnv.Load();
+DotEnv.Load(); // Ensure this is called first to load environment variables
 
 // Retrieve environment variables
 var chompApiKey = Environment.GetEnvironmentVariable("CHOMP_API_KEY");
