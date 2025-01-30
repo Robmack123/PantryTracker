@@ -22,19 +22,19 @@ export const logout = () => {
 };
 
 export const tryGetLoggedInUser = () => {
-  return fetch(_apiUrl + "/me", {
-    credentials: "same-origin", // Ensure cookies are sent with the request
-  }).then((res) => {
-    if (res.status === 401) {
-      // Handle the case when the user is not authenticated
-      // Redirect to login page or show login prompt
+  return fetch(_apiUrl + "/me")
+    .then((res) => {
+      if (res.status === 401) {
+        // Redirect to login page if unauthorized
+        window.location.href = "/login"; // or use navigate from react-router
+        return null;
+      }
+      return res.json();
+    })
+    .catch((error) => {
+      console.error("Error fetching user profile:", error);
       return null;
-    }
-    if (!res.ok) {
-      throw new Error("Failed to fetch user profile.");
-    }
-    return res.json();
-  });
+    });
 };
 
 export const register = (userProfile) => {
