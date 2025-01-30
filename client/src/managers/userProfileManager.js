@@ -1,4 +1,5 @@
-const _apiUrl = "/api/userprofile";
+const _apiUrl =
+  "https://pantrytrackingapp-degqcdguf7dbg0c4.canadacentral-01.azurewebsites.net/api/userprofile";
 
 export const getUserProfiles = () => {
   return fetch(_apiUrl).then((res) => res.json());

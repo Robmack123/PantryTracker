@@ -1,4 +1,5 @@
-const apiUrl = "/api/pantryitem";
+const apiUrl =
+  "https://pantrytrackingapp-degqcdguf7dbg0c4.canadacentral-01.azurewebsites.net/api/pantryitem";
 
 export const getPantryItems = (page = 1, pageSize = 10, searchQuery = "") => {
   const query = `page=${page}&pageSize=${pageSize}${

@@ -1,4 +1,5 @@
-const _apiUrl = "/api/household";
+const _apiUrl =
+  "https://pantrytrackingapp-degqcdguf7dbg0c4.canadacentral-01.azurewebsites.net/api/household";
 
 export const getHouseholdUsers = () => {
   return fetch(`${_apiUrl}/members`, {
@@ -48,7 +49,7 @@ export const joinHousehold = (userId, joinCode) => {
 export const createHousehold = (userId, name) => {
   console.log("Sending payload:", { name, adminUserId: userId });
 
-  return fetch(`/api/household/create`, {
+  return fetch(`${_apiUrl}/create`, {
     method: "POST",
     credentials: "same-origin",
     headers: {

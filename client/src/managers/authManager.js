@@ -1,4 +1,5 @@
-const _apiUrl = "/api/auth";
+const _apiUrl =
+  "https://pantrytrackingapp-degqcdguf7dbg0c4.canadacentral-01.azurewebsites.net/api/auth";
 
 export const login = (email, password) => {
   return fetch(_apiUrl + "/login", {
@@ -28,7 +29,7 @@ export const tryGetLoggedInUser = () => {
 
 export const register = (userProfile) => {
   userProfile.password = btoa(userProfile.password);
-  return fetch("/api/auth/register", {
+  return fetch(_apiUrl + "/register", {
     credentials: "same-origin",
     method: "POST",
     headers: {
