@@ -102,6 +102,19 @@ catch (Exception ex)
     throw;
 }
 
+// 🔹 Configure CORS to allow requests from Amplify (frontend)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend",
+        builder =>
+        {
+            builder.WithOrigins("https://main.d1n47r1bcwr1gk.amplifyapp.com") // Your Amplify URL
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials(); // Allow cookies if needed
+        });
+});
+
 var app = builder.Build();
 
 // 🔹 Ensure HTTPS redirection (this will be handled by Azure)
@@ -117,6 +130,9 @@ if (app.Environment.IsDevelopment())
 // 🔹 Ensure authentication & authorization are correctly applied
 app.UseAuthentication();
 app.UseAuthorization();
+
+// 🔹 Enable CORS policy for the app
+app.UseCors("AllowFrontend");
 
 // 🔹 Log app startup success
 app.Lifetime.ApplicationStarted.Register(() =>
