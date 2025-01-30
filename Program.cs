@@ -20,13 +20,23 @@ builder.WebHost.ConfigureKestrel(options =>
 // Load environment variables from .env file **before building services**
 DotEnv.Load();
 
+// Add Controllers and JSON serialization settings
 builder.Services.AddControllers().AddJsonOptions(opts =>
 {
     opts.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
 });
 
 // Add HttpClient for external API calls
-builder.Services.AddHttpClient();
+try
+{
+    builder.Services.AddHttpClient();
+    Console.WriteLine("HttpClient service configured.");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Failed to configure HttpClient: {ex.Message}");
+    throw;
+}
 
 // Swagger/OpenAPI configuration
 builder.Services.AddEndpointsApiExplorer();
@@ -45,17 +55,27 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 // Configure IdentityCore for user authentication
-builder.Services.AddIdentityCore<IdentityUser>(config =>
+try
 {
-    config.Password.RequireDigit = false;
-    config.Password.RequiredLength = 8;
-    config.Password.RequireLowercase = false;
-    config.Password.RequireNonAlphanumeric = false;
-    config.Password.RequireUppercase = false;
-    config.User.RequireUniqueEmail = true;
-})
-.AddRoles<IdentityRole>()
-.AddEntityFrameworkStores<PantryTrackerDbContext>();
+    builder.Services.AddIdentityCore<IdentityUser>(config =>
+    {
+        config.Password.RequireDigit = false;
+        config.Password.RequiredLength = 8;
+        config.Password.RequireLowercase = false;
+        config.Password.RequireNonAlphanumeric = false;
+        config.Password.RequireUppercase = false;
+        config.User.RequireUniqueEmail = true;
+    })
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<PantryTrackerDbContext>();
+
+    Console.WriteLine("Identity services configured.");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Failed to configure Identity: {ex.Message}");
+    throw;
+}
 
 // Allow passing datetimes without time zone data
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -63,17 +83,24 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 // 🔹 Get database connection string from environment variables
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
-if (string.IsNullOrEmpty(databaseUrl))
+try
 {
-    Console.WriteLine("DATABASE_URL is missing in Azure.");
-    throw new InvalidOperationException("DATABASE_URL environment variable is missing.");
+    if (string.IsNullOrEmpty(databaseUrl))
+    {
+        Console.WriteLine("DATABASE_URL is missing in Azure.");
+        throw new InvalidOperationException("DATABASE_URL environment variable is missing.");
+    }
+    else
+    {
+        Console.WriteLine($"DATABASE_URL is: {databaseUrl}");
+        builder.Services.AddNpgsql<PantryTrackerDbContext>(databaseUrl);
+    }
 }
-else
+catch (Exception ex)
 {
-    Console.WriteLine($"DATABASE_URL is: {databaseUrl}");
+    Console.WriteLine($"Failed to connect to the database: {ex.Message}");
+    throw;
 }
-
-builder.Services.AddNpgsql<PantryTrackerDbContext>(databaseUrl);
 
 var app = builder.Build();
 
@@ -99,13 +126,14 @@ app.Lifetime.ApplicationStarted.Register(() =>
 
 app.MapControllers();
 
+// Start the app
 try
 {
     app.Run();
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"FATAL ERROR: {ex.Message}");
+    Console.WriteLine($"FATAL ERROR during app run: {ex.Message}");
     Console.WriteLine(ex.StackTrace);
     throw;
 }
