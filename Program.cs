@@ -61,9 +61,10 @@ builder.Services.AddIdentityCore<IdentityUser>(config =>
 
 // Allows passing datetimes without time zone data 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
 // Allows our API endpoints to access the database through Entity Framework Core
-builder.Services.AddNpgsql<PantryTrackerDbContext>(builder.Configuration["PantryTrackerDbConnectionString"]);
+builder.Services.AddNpgsql<PantryTrackerDbContext>(databaseUrl);
 
 var app = builder.Build();
 
