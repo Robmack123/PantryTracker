@@ -38,12 +38,22 @@ public class PantryTrackerDbContext : IdentityDbContext<IdentityUser>
             NormalizedName = "admin"
         });
 
+        // Ensure admin password is loaded from configuration
+        var adminPassword = _configuration["AdminPassword"];
+        if (string.IsNullOrEmpty(adminPassword))
+        {
+            throw new InvalidOperationException("Admin password is not set in the configuration.");
+        }
+
+        var passwordHasher = new PasswordHasher<IdentityUser>();
+        var hashedPassword = passwordHasher.HashPassword(null, adminPassword);
+
         modelBuilder.Entity<IdentityUser>().HasData(new IdentityUser
         {
             Id = "dbc40bc6-0829-4ac5-a3ed-180f5e916a5f",
             UserName = "Administrator",
             Email = "admina@strator.comx",
-            PasswordHash = new PasswordHasher<IdentityUser>().HashPassword(null, _configuration["AdminPassword"])
+            PasswordHash = hashedPassword
         });
 
         modelBuilder.Entity<IdentityUserRole<string>>().HasData(new IdentityUserRole<string>
