@@ -131,6 +131,12 @@ public class AuthController : ControllerBase
     [Authorize]
     public IActionResult Me()
     {
+
+        if (User.Identity?.IsAuthenticated != true)
+        {
+            return Unauthorized(new { Message = "You are not authenticated" });
+        }
+
         var identityUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var profile = _dbContext.UserProfiles.SingleOrDefault(up => up.IdentityUserId == identityUserId);
         if (profile == null)

@@ -22,8 +22,18 @@ export const logout = () => {
 };
 
 export const tryGetLoggedInUser = () => {
-  return fetch(_apiUrl + "/me").then((res) => {
-    return res.status === 401 ? Promise.resolve(null) : res.json();
+  return fetch(_apiUrl + "/me", {
+    credentials: "same-origin", // Ensure cookies are sent with the request
+  }).then((res) => {
+    if (res.status === 401) {
+      // Handle the case when the user is not authenticated
+      // Redirect to login page or show login prompt
+      return null;
+    }
+    if (!res.ok) {
+      throw new Error("Failed to fetch user profile.");
+    }
+    return res.json();
   });
 };
 
