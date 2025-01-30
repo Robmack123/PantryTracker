@@ -4,15 +4,13 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using PantryTracker.Data;
 
-DotEnv.Load(); // Ensure this is called first to load environment variables
 var builder = WebApplication.CreateBuilder(args);
 
-// Load environment variables from .env file
+// Load .env variables
+DotEnv.Load(); // This loads variables from the .env file
 
-// Retrieve environment variables
+// Access the Chomp API key from the .env file
 var chompApiKey = Environment.GetEnvironmentVariable("CHOMP_API_KEY");
-var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-var adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
 
 // Add services to the container.
 builder.Services.AddControllers().AddJsonOptions(opts =>
@@ -27,6 +25,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Authentication settings
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
     {
@@ -48,28 +47,26 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         };
     });
 
+// Add Identity services
 builder.Services.AddIdentityCore<IdentityUser>(config =>
-    {
-        // Adjust password requirements for production if needed
-        config.Password.RequireDigit = false;
-        config.Password.RequiredLength = 8;
-        config.Password.RequireLowercase = false;
-        config.Password.RequireNonAlphanumeric = false;
-        config.Password.RequireUppercase = false;
-        config.User.RequireUniqueEmail = true;
-    })
+            {
+                config.Password.RequireDigit = false;
+                config.Password.RequiredLength = 8;
+                config.Password.RequireLowercase = false;
+                config.Password.RequireNonAlphanumeric = false;
+                config.Password.RequireUppercase = false;
+                config.User.RequireUniqueEmail = true;
+            })
     .AddRoles<IdentityRole>()  // Add the role service  
     .AddEntityFrameworkStores<PantryTrackerDbContext>();
 
 // Allows passing datetimes without time zone data 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
-// Configure database connection using environment variable
-if (string.IsNullOrEmpty(databaseUrl))
-{
-    throw new InvalidOperationException("DATABASE_URL environment variable is not set.");
-}
+// Get the database connection string from the .env file
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
+// Allow the app to access the PostgreSQL database through Entity Framework Core
 builder.Services.AddNpgsql<PantryTrackerDbContext>(databaseUrl);
 
 var app = builder.Build();
@@ -82,7 +79,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-// These two calls are required to add auth to the pipeline for a request
 app.UseAuthentication();
 app.UseAuthorization();
 
