@@ -6,13 +6,18 @@ using PantryTracker.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load .env variables
+// Add Kestrel server configuration to ONLY support HTTPS
+builder.WebHost.ConfigureKestrel(options =>
+{
+    // Remove HTTP binding completely (only bind to HTTPS)
+    options.ListenAnyIP(5001, listenOptions =>
+    {
+        listenOptions.UseHttps(); // Make sure it only listens on HTTPS
+    });
+});
+
+// Add services to the container
 DotEnv.Load(); // This loads variables from the .env file
-
-// Access a sample variable for demonstration (like an API key)
-var chompApiKey = Environment.GetEnvironmentVariable("CHOMP_API_KEY");
-
-// Add services to the container.
 builder.Services.AddControllers().AddJsonOptions(opts =>
 {
     opts.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
@@ -21,7 +26,7 @@ builder.Services.AddControllers().AddJsonOptions(opts =>
 // Add HttpClient for external API calls
 builder.Services.AddHttpClient();
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// Swagger/OpenAPI configuration
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -30,36 +35,25 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.Cookie.Name = "PantryTrackerLoginCookie";
         options.Cookie.SameSite = SameSiteMode.Strict;
-        options.Cookie.HttpOnly = true; // The cookie cannot be accessed through JS (protects against XSS)
-        options.Cookie.MaxAge = new TimeSpan(7, 0, 0, 0); // Cookie expires in a week regardless of activity
-        options.SlidingExpiration = true; // Extend the cookie lifetime with activity up to 7 days
-        options.ExpireTimeSpan = new TimeSpan(24, 0, 0); // Cookie will expire in 24 hours without activity
-        options.Events.OnRedirectToLogin = (context) =>
-        {
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            return Task.CompletedTask;
-        };
-        options.Events.OnRedirectToAccessDenied = (context) =>
-        {
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            return Task.CompletedTask;
-        };
+        options.Cookie.HttpOnly = true;
+        options.Cookie.MaxAge = new TimeSpan(7, 0, 0, 0); // Cookie expires in a week
+        options.SlidingExpiration = true; // Extend cookie lifetime with activity up to 7 days
+        options.ExpireTimeSpan = new TimeSpan(24, 0, 0); // Cookie expires in 24 hours
     });
 
 builder.Services.AddIdentityCore<IdentityUser>(config =>
-            {
-                // For demonstration only - change these for other projects
-                config.Password.RequireDigit = false;
-                config.Password.RequiredLength = 8;
-                config.Password.RequireLowercase = false;
-                config.Password.RequireNonAlphanumeric = false;
-                config.Password.RequireUppercase = false;
-                config.User.RequireUniqueEmail = true;
-            })
-    .AddRoles<IdentityRole>()  // Add the role service  
-    .AddEntityFrameworkStores<PantryTrackerDbContext>();
+{
+    config.Password.RequireDigit = false;
+    config.Password.RequiredLength = 8;
+    config.Password.RequireLowercase = false;
+    config.Password.RequireNonAlphanumeric = false;
+    config.Password.RequireUppercase = false;
+    config.User.RequireUniqueEmail = true;
+})
+.AddRoles<IdentityRole>()
+.AddEntityFrameworkStores<PantryTrackerDbContext>();
 
-// Allows passing datetimes without time zone data 
+// Allow passing datetimes without time zone data 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
@@ -67,20 +61,18 @@ builder.Services.AddNpgsql<PantryTrackerDbContext>(databaseUrl);
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Ensure HTTPS redirection
+app.UseHttpsRedirection();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-// These two calls are required to add auth to the pipeline for a request
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-
 
 app.Run();
