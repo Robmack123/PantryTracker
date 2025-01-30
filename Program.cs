@@ -2,9 +2,14 @@ using System.Text.Json.Serialization;
 using dotenv.net; // Import the dotenv.net package
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 using PantryTracker.Data;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// 🔹 Add logging to help diagnose startup failures
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
 // 🔹 Add Kestrel server configuration for both HTTPS and required Azure port (8080)
 builder.WebHost.ConfigureKestrel(options =>
@@ -15,11 +20,11 @@ builder.WebHost.ConfigureKestrel(options =>
         listenOptions.UseHttps(); // Ensure HTTPS is enabled
     });
 
-    // 🔹 Add explicit binding to port 8080 (needed for Azure)
+    // 🔹 Ensure the app listens on port 8080 (required for Azure)
     options.ListenAnyIP(8080);
 });
 
-// Load environment variables from .env file
+// Load environment variables from .env file **before building services**
 DotEnv.Load();
 
 builder.Services.AddControllers().AddJsonOptions(opts =>
@@ -64,6 +69,10 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 // 🔹 Get database connection string from environment variables
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+if (string.IsNullOrEmpty(databaseUrl))
+{
+    throw new InvalidOperationException("DATABASE_URL environment variable is missing.");
+}
 builder.Services.AddNpgsql<PantryTrackerDbContext>(databaseUrl);
 
 var app = builder.Build();
@@ -81,6 +90,12 @@ if (app.Environment.IsDevelopment())
 // 🔹 Ensure authentication & authorization are correctly applied
 app.UseAuthentication();
 app.UseAuthorization();
+
+// 🔹 Log app startup success
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    Console.WriteLine("🚀 PantryTracker API has started successfully!");
+});
 
 // 🔹 Map controllers
 app.MapControllers();
