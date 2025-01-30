@@ -2,7 +2,6 @@ using System.Text.Json.Serialization;
 using dotenv.net; // Import the dotenv.net package
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Logging;
 using PantryTracker.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,16 +10,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
-// 🔹 Add Kestrel server configuration for both HTTPS and required Azure port (8080)
+// 🔹 Add Kestrel server configuration to ensure it listens on port 8080 for Azure
 builder.WebHost.ConfigureKestrel(options =>
 {
-    // Keep HTTPS binding
-    options.ListenAnyIP(5001, listenOptions =>
-    {
-        listenOptions.UseHttps(); // Ensure HTTPS is enabled
-    });
-
-    // 🔹 Ensure the app listens on port 8080 (required for Azure)
+    // Ensure the app listens only on port 8080 (required for Azure)
     options.ListenAnyIP(8080);
 });
 
@@ -82,10 +75,9 @@ else
 
 builder.Services.AddNpgsql<PantryTrackerDbContext>(databaseUrl);
 
-
 var app = builder.Build();
 
-// 🔹 Ensure HTTPS redirection
+// 🔹 Ensure HTTPS redirection (this will be handled by Azure)
 app.UseHttpsRedirection();
 
 // 🔹 Enable Swagger in development mode
@@ -104,7 +96,6 @@ app.Lifetime.ApplicationStarted.Register(() =>
 {
     Console.WriteLine("🚀 PantryTracker API has started successfully!");
 });
-
 
 app.MapControllers();
 
