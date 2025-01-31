@@ -10,13 +10,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
-// Configure Kestrel to listen on both 8080 and 8181 for Azure
-builder.WebHost.ConfigureKestrel(options =>
-{
-    options.ListenAnyIP(8080);
-    options.ListenAnyIP(8181);
-});
-
 // Load environment variables from .env file **before building services**
 DotEnv.Load();
 
@@ -117,7 +110,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Disable HTTPS redirection in production (Azure handles it)
+// 🔹 **Disable HTTPS redirection in production (Azure enforces HTTPS automatically)**
 if (!app.Environment.IsProduction())
 {
     app.UseHttpsRedirection();
