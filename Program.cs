@@ -108,9 +108,10 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         builder =>
         {
-            builder.AllowAnyOrigin()
+            builder.WithOrigins("https://deployment.d1n47r1bcwr1gk.amplifyapp.com") // Your Amplify URL
                 .AllowAnyMethod()
-                .AllowAnyHeader();
+                .AllowAnyHeader()
+                .AllowCredentials(); // Allow cookies if needed
         });
 });
 
