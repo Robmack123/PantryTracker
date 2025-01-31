@@ -1,20 +1,20 @@
 using System.Text.Json.Serialization;
-using dotenv.net; // Import the dotenv.net package
+using dotenv.net;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using PantryTracker.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 🔹 Add logging to help diagnose startup failures
+// Logging to help diagnose startup failures
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
-// 🔹 Add Kestrel server configuration to ensure it listens on port 8080 for Azure
+// Configure Kestrel to listen on both 8080 and 8181 for Azure
 builder.WebHost.ConfigureKestrel(options =>
 {
-    // Ensure the app listens only on port 8080 (required for Azure)
     options.ListenAnyIP(8080);
+    options.ListenAnyIP(8181);
 });
 
 // Load environment variables from .env file **before building services**
@@ -42,16 +42,16 @@ catch (Exception ex)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 🔹 Configure authentication with cookie-based login
+// Configure authentication with cookie-based login
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
     {
         options.Cookie.Name = "PantryTrackerLoginCookie";
         options.Cookie.SameSite = SameSiteMode.Strict;
         options.Cookie.HttpOnly = true;
-        options.Cookie.MaxAge = TimeSpan.FromDays(7); // Cookie expires in a week
+        options.Cookie.MaxAge = TimeSpan.FromDays(7);
         options.SlidingExpiration = true;
-        options.ExpireTimeSpan = TimeSpan.FromHours(24); // Cookie expires in 24 hours
+        options.ExpireTimeSpan = TimeSpan.FromHours(24);
     });
 
 // Configure IdentityCore for user authentication
@@ -80,7 +80,7 @@ catch (Exception ex)
 // Allow passing datetimes without time zone data
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
-// 🔹 Get database connection string from environment variables
+// Get database connection string from environment variables
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
 try
@@ -92,7 +92,7 @@ try
     }
     else
     {
-        Console.WriteLine($"DATABASE_URL is: {databaseUrl}");
+        Console.WriteLine("Database connection initialized successfully.");
         builder.Services.AddNpgsql<PantryTrackerDbContext>(databaseUrl);
     }
 }
@@ -102,42 +102,48 @@ catch (Exception ex)
     throw;
 }
 
-// 🔹 Configure CORS to allow requests from Amplify (frontend)
+// Configure CORS to allow requests from Amplify (frontend)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
         builder =>
         {
-            builder.WithOrigins("https://deployment.d1n47r1bcwr1gk.amplifyapp.com") // Your Amplify URL
+            builder.WithOrigins("https://deployment.d1n47r1bcwr1gk.amplifyapp.com")
                 .AllowAnyMethod()
                 .AllowAnyHeader()
-                .AllowCredentials(); // Allow cookies if needed
+                .AllowCredentials();
         });
 });
 
 var app = builder.Build();
 
-// 🔹 Ensure HTTPS redirection (this will be handled by Azure)
-app.UseHttpsRedirection();
+// Disable HTTPS redirection in production (Azure handles it)
+if (!app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
 
-// 🔹 Enable Swagger in development mode
+// Enable Swagger in development mode
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// 🔹 Ensure authentication & authorization are correctly applied
+// Ensure authentication & authorization are correctly applied
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 🔹 Enable CORS policy for the app
+// Enable CORS policy for the app
 app.UseCors("AllowFrontend");
 
-// 🔹 Log app startup success
+// Health check endpoint for debugging
+app.MapGet("/health", () => Results.Ok("Healthy"));
+
+// Log app startup success
 app.Lifetime.ApplicationStarted.Register(() =>
 {
-    Console.WriteLine("🚀 PantryTracker API has started successfully!");
+    Console.WriteLine("PantryTracker API has started successfully!");
 });
 
 app.MapControllers();
