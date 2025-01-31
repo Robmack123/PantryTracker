@@ -14,7 +14,7 @@ builder.Logging.AddConsole();
 builder.WebHost.ConfigureKestrel(options =>
 {
     // Ensure the app listens only on port 8080 (required for Azure)
-    options.ListenAnyIP(8080);
+    // options.ListenAnyIP(8080);
 });
 
 // Load environment variables from .env file **before building services**
@@ -108,10 +108,9 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         builder =>
         {
-            builder.WithOrigins("https://deployment.d1n47r1bcwr1gk.amplifyapp.com") // Your Amplify URL
+            builder.AllowAnyOrigin()
                 .AllowAnyMethod()
-                .AllowAnyHeader()
-                .AllowCredentials(); // Allow cookies if needed
+                .AllowAnyHeader();
         });
 });
 
