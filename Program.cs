@@ -73,21 +73,27 @@ catch (Exception ex)
 // Allow passing datetimes without time zone data
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
-// Get database connection string from environment variables
+// Step 1: Get database connection string from environment variables
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
+// Step 2: Validate and log the database connection string
+if (string.IsNullOrEmpty(databaseUrl))
+{
+    Console.WriteLine("ERROR: DATABASE_URL is missing in Azure. Ensure it is set in Application Settings.");
+    throw new InvalidOperationException("DATABASE_URL environment variable is missing.");
+}
+else
+{
+    // Mask password in logs to avoid exposing secrets
+    var maskedDatabaseUrl = System.Text.RegularExpressions.Regex.Replace(databaseUrl, @"Password=[^;]*", "Password=****");
+    Console.WriteLine($"DATABASE_URL is loaded: {maskedDatabaseUrl}");
+}
+
+// Step 3: Initialize PostgreSQL database connection
 try
 {
-    if (string.IsNullOrEmpty(databaseUrl))
-    {
-        Console.WriteLine("DATABASE_URL is missing in Azure.");
-        throw new InvalidOperationException("DATABASE_URL environment variable is missing.");
-    }
-    else
-    {
-        Console.WriteLine("Database connection initialized successfully.");
-        builder.Services.AddNpgsql<PantryTrackerDbContext>(databaseUrl);
-    }
+    builder.Services.AddNpgsql<PantryTrackerDbContext>(databaseUrl);
+    Console.WriteLine("Database connection initialized successfully.");
 }
 catch (Exception ex)
 {
@@ -110,7 +116,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// 🔹 **Disable HTTPS redirection in production (Azure enforces HTTPS automatically)**
+// Disable HTTPS redirection in production (Azure enforces HTTPS automatically)
 if (!app.Environment.IsProduction())
 {
     app.UseHttpsRedirection();
@@ -138,8 +144,6 @@ app.Lifetime.ApplicationStarted.Register(() =>
 {
     Console.WriteLine("PantryTracker API has started successfully!");
 });
-
-app.MapControllers();
 
 // Start the app
 try
