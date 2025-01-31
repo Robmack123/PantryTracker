@@ -35,9 +35,7 @@ public class AuthController : ControllerBase
             }
 
             string encodedCreds = authHeader.Substring(6).Trim();
-            string creds = Encoding
-                .GetEncoding("iso-8859-1")
-                .GetString(Convert.FromBase64String(encodedCreds));
+            string creds = Encoding.GetEncoding("iso-8859-1").GetString(Convert.FromBase64String(encodedCreds));
 
             // Get email and password
             int separator = creds.IndexOf(':');
@@ -49,6 +47,9 @@ public class AuthController : ControllerBase
             string email = creds.Substring(0, separator);
             string password = creds.Substring(separator + 1);
 
+            // Decode the password from Base64 before using it
+            string decodedPassword = Encoding.UTF8.GetString(Convert.FromBase64String(password));
+
             // Retrieve user from the database
             var user = _dbContext.Users.FirstOrDefault(u => u.Email == email);
             if (user == null)
@@ -57,7 +58,7 @@ public class AuthController : ControllerBase
             }
 
             var hasher = new PasswordHasher<IdentityUser>();
-            var result = hasher.VerifyHashedPassword(user, user.PasswordHash, password);
+            var result = hasher.VerifyHashedPassword(user, user.PasswordHash, decodedPassword);
 
             if (result != PasswordVerificationResult.Success)
             {
@@ -173,11 +174,10 @@ public class AuthController : ControllerBase
                 UserName = registration.Email // Using email as username
             };
 
-            var password = Encoding
-                .GetEncoding("iso-8859-1")
-                .GetString(Convert.FromBase64String(registration.Password));
+            // Decode the password from Base64 before using it
+            var decodedPassword = Encoding.UTF8.GetString(Convert.FromBase64String(registration.Password));
 
-            var result = await _userManager.CreateAsync(user, password);
+            var result = await _userManager.CreateAsync(user, decodedPassword);
             if (!result.Succeeded)
             {
                 return BadRequest(new { Message = "User creation failed.", Errors = result.Errors });
