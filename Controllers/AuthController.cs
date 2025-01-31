@@ -35,7 +35,9 @@ public class AuthController : ControllerBase
             }
 
             string encodedCreds = authHeader.Substring(6).Trim();
-            string creds = Encoding.GetEncoding("iso-8859-1").GetString(Convert.FromBase64String(encodedCreds));
+            string creds = Encoding
+                .GetEncoding("iso-8859-1")
+                .GetString(Convert.FromBase64String(encodedCreds));
 
             // Get email and password
             int separator = creds.IndexOf(':');
@@ -47,9 +49,6 @@ public class AuthController : ControllerBase
             string email = creds.Substring(0, separator);
             string password = creds.Substring(separator + 1);
 
-            // Decode the password from Base64 before using it
-            string decodedPassword = Encoding.UTF8.GetString(Convert.FromBase64String(password));
-
             // Retrieve user from the database
             var user = _dbContext.Users.FirstOrDefault(u => u.Email == email);
             if (user == null)
@@ -58,7 +57,7 @@ public class AuthController : ControllerBase
             }
 
             var hasher = new PasswordHasher<IdentityUser>();
-            var result = hasher.VerifyHashedPassword(user, user.PasswordHash, decodedPassword);
+            var result = hasher.VerifyHashedPassword(user, user.PasswordHash, password);
 
             if (result != PasswordVerificationResult.Success)
             {
@@ -73,10 +72,10 @@ public class AuthController : ControllerBase
             }
 
             var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.UserName)
-            };
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Name, user.UserName)
+        };
 
             // Add roles to claims if any
             var userRoles = _dbContext.UserRoles.Where(ur => ur.UserId == user.Id).ToList();
@@ -112,6 +111,7 @@ public class AuthController : ControllerBase
         }
     }
 
+
     [HttpGet("logout")]
     [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
     public IActionResult Logout()
@@ -131,11 +131,6 @@ public class AuthController : ControllerBase
     [Authorize]
     public IActionResult Me()
     {
-        if (User.Identity?.IsAuthenticated != true)
-        {
-            return Unauthorized(new { Message = "You are not authenticated" });
-        }
-
         var identityUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var profile = _dbContext.UserProfiles.SingleOrDefault(up => up.IdentityUserId == identityUserId);
         if (profile == null)
@@ -174,10 +169,11 @@ public class AuthController : ControllerBase
                 UserName = registration.Email // Using email as username
             };
 
-            // Decode the password from Base64 before using it
-            var decodedPassword = Encoding.UTF8.GetString(Convert.FromBase64String(registration.Password));
+            var password = Encoding
+                .GetEncoding("iso-8859-1")
+                .GetString(Convert.FromBase64String(registration.Password));
 
-            var result = await _userManager.CreateAsync(user, decodedPassword);
+            var result = await _userManager.CreateAsync(user, password);
             if (!result.Succeeded)
             {
                 return BadRequest(new { Message = "User creation failed.", Errors = result.Errors });
@@ -237,10 +233,10 @@ public class AuthController : ControllerBase
 
             // Step 4: Sign in the user
             var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.UserName)
-            };
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Name, user.UserName)
+        };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
@@ -267,4 +263,8 @@ public class AuthController : ControllerBase
         } while (_dbContext.Households.Any(h => h.JoinCode == joinCode));
         return joinCode;
     }
+
+
+
+
 }
