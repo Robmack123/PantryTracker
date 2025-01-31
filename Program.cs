@@ -14,7 +14,7 @@ builder.Logging.AddConsole();
 builder.WebHost.ConfigureKestrel(options =>
 {
     // Ensure the app listens only on port 8080 (required for Azure)
-    // options.ListenAnyIP(8080);
+    options.ListenAnyIP(8080);
 });
 
 // Load environment variables from .env file **before building services**
