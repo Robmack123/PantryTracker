@@ -22,11 +22,13 @@ export const logout = () => {
 };
 
 export const tryGetLoggedInUser = () => {
-  return fetch(_apiUrl + "/me")
+  return fetch(_apiUrl + "/me", {
+    credentials: "include",
+  })
     .then((res) => {
       if (res.status === 401) {
         // Redirect to login page if unauthorized
-        window.location.href = "/login"; // or use navigate from react-router
+        window.location.href = "/login";
         return null;
       }
       return res.json();

@@ -159,6 +159,8 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegistrationDTO registration)
     {
+        registration.JoinCode = registration.JoinCode ?? string.Empty;
+
         using var transaction = await _dbContext.Database.BeginTransactionAsync();
         try
         {

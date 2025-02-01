@@ -45,7 +45,20 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.MaxAge = TimeSpan.FromDays(7);
         options.SlidingExpiration = true;
         options.ExpireTimeSpan = TimeSpan.FromHours(24);
+
+        // Prevent redirects for API calls (return 401 instead)
+        options.Events.OnRedirectToLogin = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        };
+        options.Events.OnRedirectToAccessDenied = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        };
     });
+
 
 // Configure IdentityCore for user authentication
 try
