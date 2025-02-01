@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import "./App.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { tryGetLoggedInUser } from "./managers/authManager";
@@ -8,15 +9,22 @@ import ApplicationViews from "./components/ApplicationViews";
 
 function App() {
   const [loggedInUser, setLoggedInUser] = useState();
+  const location = useLocation();
 
   useEffect(() => {
-    // user will be null if not authenticated
+    // If we're on /login or /register, don't call the /me endpoint.
+    if (location.pathname === "/login" || location.pathname === "/register") {
+      // Set loggedInUser to null if not authenticated
+      setLoggedInUser(null);
+      return;
+    }
+    // For all other pages, call the /me endpoint.
     tryGetLoggedInUser().then((user) => {
       setLoggedInUser(user);
     });
-  }, []);
+  }, [location.pathname]);
 
-  // wait to get a definite logged-in state before rendering
+  // Wait to get a definite logged-in state before rendering
   if (loggedInUser === undefined) {
     return <Spinner />;
   }
