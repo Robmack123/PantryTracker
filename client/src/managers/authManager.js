@@ -22,13 +22,22 @@ export const logout = () => {
 };
 
 export const tryGetLoggedInUser = () => {
+  // Normalize the current pathname
+  const currentPath = window.location.pathname
+    .replace(/\/+$/, "")
+    .toLowerCase();
+
+  // If we're on the login or register page, just resolve to null
+  if (currentPath === "/login" || currentPath === "/register") {
+    console.log("Skipping /me call on", currentPath);
+    return Promise.resolve(null);
+  }
+
+  // Otherwise, call the /me endpoint.
   return fetch(_apiUrl + "/me", { credentials: "include" })
     .then((res) => {
+      // If we get a 401, just resolve to null (do not redirect here)
       if (res.status === 401) {
-        // Only redirect if not already on the login page
-        if (window.location.pathname !== "/login") {
-          window.location.href = "/login";
-        }
         return null;
       }
       return res.json();
