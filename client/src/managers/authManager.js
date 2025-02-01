@@ -22,13 +22,13 @@ export const logout = () => {
 };
 
 export const tryGetLoggedInUser = () => {
-  return fetch(_apiUrl + "/me", {
-    credentials: "include",
-  })
+  return fetch(_apiUrl + "/me", { credentials: "include" })
     .then((res) => {
       if (res.status === 401) {
-        // Redirect to login page if unauthorized
-        window.location.href = "/login";
+        // Only redirect if not already on the login page
+        if (window.location.pathname !== "/login") {
+          window.location.href = "/login";
+        }
         return null;
       }
       return res.json();
