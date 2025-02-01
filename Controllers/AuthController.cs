@@ -25,6 +25,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [AllowAnonymous]
     public IActionResult Login([FromHeader(Name = "Authorization")] string authHeader)
     {
         try
@@ -157,6 +158,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [AllowAnonymous]
     public async Task<IActionResult> Register(RegistrationDTO registration)
     {
         registration.JoinCode = registration.JoinCode ?? string.Empty;
