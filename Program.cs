@@ -133,6 +133,8 @@ if (app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapControllers();
+
 // Enable CORS policy for the app
 app.UseCors("AllowFrontend");
 
