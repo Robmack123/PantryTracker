@@ -4,7 +4,7 @@ const _apiUrl =
 export const login = (email, password) => {
   return fetch(_apiUrl + "/login", {
     method: "POST",
-    credentials: "same-origin",
+    credentials: "include",
     headers: {
       Authorization: `Basic ${btoa(`${email}:${password}`)}`,
     },
@@ -40,7 +40,7 @@ export const tryGetLoggedInUser = () => {
 export const register = (userProfile) => {
   userProfile.password = btoa(userProfile.password);
   return fetch(_apiUrl + "/register", {
-    credentials: "same-origin",
+    credentials: "include",
     method: "POST",
     headers: {
       "Content-Type": "application/json",

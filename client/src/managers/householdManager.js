@@ -4,7 +4,7 @@ const _apiUrl =
 export const getHouseholdUsers = () => {
   return fetch(`${_apiUrl}/members`, {
     method: "GET",
-    credentials: "same-origin",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
@@ -19,7 +19,7 @@ export const getHouseholdUsers = () => {
 export const removeUserFromHousehold = (userId) => {
   return fetch(`${_apiUrl}/remove-user/${userId}`, {
     method: "DELETE",
-    credentials: "same-origin",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
@@ -33,7 +33,7 @@ export const removeUserFromHousehold = (userId) => {
 export const joinHousehold = (userId, joinCode) => {
   return fetch(`${_apiUrl}/join`, {
     method: "POST",
-    credentials: "same-origin",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
@@ -51,7 +51,7 @@ export const createHousehold = (userId, name) => {
 
   return fetch(`${_apiUrl}/create`, {
     method: "POST",
-    credentials: "same-origin",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
