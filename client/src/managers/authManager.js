@@ -12,7 +12,8 @@ export const login = (email, password) => {
     if (res.status !== 200) {
       return Promise.resolve(null);
     } else {
-      return tryGetLoggedInUser();
+      // Instead of calling tryGetLoggedInUser(), return the JSON from the login response.
+      return res.json();
     }
   });
 };
