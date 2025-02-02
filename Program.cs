@@ -1,14 +1,12 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using System.Text.Json.Serialization;
 using dotenv.net;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using PantryTracker.Data;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Logging to help diagnose startup failures
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
 
 // Load environment variables from .env file **before building services**
 DotEnv.Load();
@@ -20,157 +18,82 @@ builder.Services.AddControllers().AddJsonOptions(opts =>
 });
 
 // Add HttpClient for external API calls
-try
-{
-    builder.Services.AddHttpClient();
-    Console.WriteLine("HttpClient service configured.");
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"Failed to configure HttpClient: {ex.Message}");
-    throw;
-}
+builder.Services.AddHttpClient();
 
 // Swagger/OpenAPI configuration
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configure authentication with cookie-based login
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
-    {
-        options.Cookie.Name = "PantryTrackerLoginCookie";
-        // Allow the cookie to be sent cross-site by using None
-        options.Cookie.SameSite = SameSiteMode.None;
-        // Ensure cookies are only sent over HTTPS
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-        options.Cookie.HttpOnly = true;
-        options.Cookie.MaxAge = TimeSpan.FromDays(7);
-        options.SlidingExpiration = true;
-        options.ExpireTimeSpan = TimeSpan.FromHours(24);
-
-        // Prevent redirects for API calls (return 401 instead)
-        options.Events.OnRedirectToLogin = context =>
-        {
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            return Task.CompletedTask;
-        };
-        options.Events.OnRedirectToAccessDenied = context =>
-        {
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            return Task.CompletedTask;
-        };
-    });
-
-
 // Configure IdentityCore for user authentication
-try
+builder.Services.AddIdentityCore<IdentityUser>(config =>
 {
-    builder.Services.AddIdentityCore<IdentityUser>(config =>
+    config.Password.RequireDigit = false;
+    config.Password.RequiredLength = 8;
+    config.Password.RequireLowercase = false;
+    config.Password.RequireNonAlphanumeric = false;
+    config.Password.RequireUppercase = false;
+    config.User.RequireUniqueEmail = true;
+})
+.AddRoles<IdentityRole>()
+.AddEntityFrameworkStores<PantryTrackerDbContext>();
+
+// Configure JWT authentication
+var jwtKey = builder.Configuration["Jwt:Key"];
+var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+var jwtAudience = builder.Configuration["Jwt:Audience"];
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        config.Password.RequireDigit = false;
-        config.Password.RequiredLength = 8;
-        config.Password.RequireLowercase = false;
-        config.Password.RequireNonAlphanumeric = false;
-        config.Password.RequireUppercase = false;
-        config.User.RequireUniqueEmail = true;
-    })
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<PantryTrackerDbContext>();
-
-    Console.WriteLine("Identity services configured.");
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"Failed to configure Identity: {ex.Message}");
-    throw;
-}
-
-// Allow passing datetimes without time zone data
-AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
-
-// Step 1: Get database connection string from environment variables
-var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-
-// Step 2: Validate and log the database connection string
-if (string.IsNullOrEmpty(databaseUrl))
-{
-    Console.WriteLine("ERROR: DATABASE_URL is missing in Azure. Ensure it is set in Application Settings.");
-    throw new InvalidOperationException("DATABASE_URL environment variable is missing.");
-}
-else
-{
-    // Mask password in logs to avoid exposing secrets
-    var maskedDatabaseUrl = System.Text.RegularExpressions.Regex.Replace(databaseUrl, @"Password=[^;]*", "Password=****");
-    Console.WriteLine($"DATABASE_URL is loaded: {maskedDatabaseUrl}");
-}
-
-// Step 3: Initialize PostgreSQL database connection
-try
-{
-    builder.Services.AddNpgsql<PantryTrackerDbContext>(databaseUrl);
-    Console.WriteLine("Database connection initialized successfully.");
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"Failed to connect to the database: {ex.Message}");
-    throw;
-}
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+    };
+});
 
 // Configure CORS to allow requests from Amplify (frontend)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
-        builder =>
+        policyBuilder =>
         {
-            builder.WithOrigins("https://deployment.d1n47r1bcwr1gk.amplifyapp.com")
+            policyBuilder.WithOrigins("https://deployment.d1n47r1bcwr1gk.amplifyapp.com")
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials();
         });
 });
 
+// Database configuration
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+if (string.IsNullOrEmpty(databaseUrl))
+{
+    throw new InvalidOperationException("DATABASE_URL environment variable is missing.");
+}
+builder.Services.AddNpgsql<PantryTrackerDbContext>(databaseUrl);
+
 var app = builder.Build();
 
-// Disable HTTPS redirection in production (Azure enforces HTTPS automatically)
 if (!app.Environment.IsProduction())
 {
     app.UseHttpsRedirection();
 }
 
-// Enable Swagger in development mode
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseCors("AllowFrontend");
 
-// Ensure authentication & authorization are correctly applied
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-// Enable CORS policy for the app
-app.UseCors("AllowFrontend");
-
-// Health check endpoint for debugging
-app.MapGet("/health", () => Results.Ok("Healthy"));
-
-// Log app startup success
-app.Lifetime.ApplicationStarted.Register(() =>
-{
-    Console.WriteLine("PantryTracker API has started successfully!");
-});
-
-// Start the app
-try
-{
-    app.Run();
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"FATAL ERROR during app run: {ex.Message}");
-    Console.WriteLine(ex.StackTrace);
-    throw;
-}
+app.Run();

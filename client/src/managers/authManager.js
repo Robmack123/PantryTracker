@@ -4,18 +4,22 @@ const _apiUrl =
 export const login = (email, password) => {
   return fetch(_apiUrl + "/login", {
     method: "POST",
-    credentials: "include",
     headers: {
       Authorization: `Basic ${btoa(`${email}:${password}`)}`,
     },
-  }).then((res) => {
-    if (res.status !== 200) {
-      return Promise.resolve(null);
-    } else {
-      // Instead of calling tryGetLoggedInUser(), return the JSON from the login response.
+  })
+    .then((res) => {
+      if (res.status !== 200) {
+        return Promise.resolve(null);
+      }
       return res.json();
-    }
-  });
+    })
+    .then((data) => {
+      if (data && data.token) {
+        localStorage.setItem("authToken", data.token);
+      }
+      return data;
+    });
 };
 
 export const logout = () => {
@@ -52,19 +56,33 @@ export const tryGetLoggedInUser = () => {
 export const register = (userProfile) => {
   userProfile.password = btoa(userProfile.password);
   return fetch(_apiUrl + "/register", {
-    credentials: "include",
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(userProfile),
-  }).then((res) => {
-    if (!res.ok) {
-      return res.json().then((error) => {
-        throw new Error(error.message || "Registration failed.");
-      });
-    }
-    // Instead of calling tryGetLoggedInUser(), return a dummy success object.
-    return {};
-  });
+  })
+    .then((res) => {
+      if (!res.ok) {
+        return res.json().then((error) => {
+          throw new Error(error.message || "Registration failed.");
+        });
+      }
+      return res.json();
+    })
+    .then((data) => {
+      if (data && data.token) {
+        localStorage.setItem("authToken", data.token);
+      }
+      return data;
+    });
+};
+
+export const fetchProtectedData = () => {
+  const token = localStorage.getItem("authToken");
+  return fetch(_apiUrl + "/me", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((res) => res.json());
 };
