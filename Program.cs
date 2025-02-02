@@ -20,30 +20,18 @@ builder.Services.AddControllers().AddJsonOptions(opts =>
 });
 
 // Add HttpClient for external API calls
-try
-{
-    builder.Services.AddHttpClient();
-    Console.WriteLine("HttpClient service configured.");
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"Failed to configure HttpClient: {ex.Message}");
-    throw;
-}
+builder.Services.AddHttpClient();
 
 // Swagger/OpenAPI configuration
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configure authentication with cookie-based login
+// Configure authentication with cookie‑based login
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
     {
         options.Cookie.Name = "PantryTrackerLoginCookie";
-        // Allow the cookie to be sent cross-site by using None
-        options.Cookie.SameSite = SameSiteMode.None;
-        // Ensure cookies are only sent over HTTPS
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Strict; // Use Strict (or adjust if needed)
         options.Cookie.HttpOnly = true;
         options.Cookie.MaxAge = TimeSpan.FromDays(7);
         options.SlidingExpiration = true;
@@ -62,37 +50,24 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         };
     });
 
-
 // Configure IdentityCore for user authentication
-try
+builder.Services.AddIdentityCore<IdentityUser>(config =>
 {
-    builder.Services.AddIdentityCore<IdentityUser>(config =>
-    {
-        config.Password.RequireDigit = false;
-        config.Password.RequiredLength = 8;
-        config.Password.RequireLowercase = false;
-        config.Password.RequireNonAlphanumeric = false;
-        config.Password.RequireUppercase = false;
-        config.User.RequireUniqueEmail = true;
-    })
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<PantryTrackerDbContext>();
-
-    Console.WriteLine("Identity services configured.");
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"Failed to configure Identity: {ex.Message}");
-    throw;
-}
+    config.Password.RequireDigit = false;
+    config.Password.RequiredLength = 8;
+    config.Password.RequireLowercase = false;
+    config.Password.RequireNonAlphanumeric = false;
+    config.Password.RequireUppercase = false;
+    config.User.RequireUniqueEmail = true;
+})
+.AddRoles<IdentityRole>()
+.AddEntityFrameworkStores<PantryTrackerDbContext>();
 
 // Allow passing datetimes without time zone data
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
-// Step 1: Get database connection string from environment variables
+// Get the database connection string from environment variables
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-
-// Step 2: Validate and log the database connection string
 if (string.IsNullOrEmpty(databaseUrl))
 {
     Console.WriteLine("ERROR: DATABASE_URL is missing in Azure. Ensure it is set in Application Settings.");
@@ -100,34 +75,24 @@ if (string.IsNullOrEmpty(databaseUrl))
 }
 else
 {
-    // Mask password in logs to avoid exposing secrets
     var maskedDatabaseUrl = System.Text.RegularExpressions.Regex.Replace(databaseUrl, @"Password=[^;]*", "Password=****");
     Console.WriteLine($"DATABASE_URL is loaded: {maskedDatabaseUrl}");
 }
 
-// Step 3: Initialize PostgreSQL database connection
-try
-{
-    builder.Services.AddNpgsql<PantryTrackerDbContext>(databaseUrl);
-    Console.WriteLine("Database connection initialized successfully.");
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"Failed to connect to the database: {ex.Message}");
-    throw;
-}
+// Initialize PostgreSQL database connection
+builder.Services.AddNpgsql<PantryTrackerDbContext>(databaseUrl);
+Console.WriteLine("Database connection initialized successfully.");
 
 // Configure CORS to allow requests from Amplify (frontend)
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend",
-        builder =>
-        {
-            builder.WithOrigins("https://deployment.d1n47r1bcwr1gk.amplifyapp.com")
-                .AllowAnyMethod()
-                .AllowAnyHeader()
-                .AllowCredentials();
-        });
+    options.AddPolicy("AllowFrontend", policyBuilder =>
+    {
+        policyBuilder.WithOrigins("https://deployment.d1n47r1bcwr1gk.amplifyapp.com")
+                     .AllowAnyMethod()
+                     .AllowAnyHeader()
+                     .AllowCredentials();
+    });
 });
 
 var app = builder.Build();
@@ -138,32 +103,21 @@ if (!app.Environment.IsProduction())
     app.UseHttpsRedirection();
 }
 
-// Enable Swagger in development mode
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseCors("AllowFrontend");
 
-// Ensure authentication & authorization are correctly applied
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-// Enable CORS policy for the app
-app.UseCors("AllowFrontend");
-
 // Health check endpoint for debugging
 app.MapGet("/health", () => Results.Ok("Healthy"));
 
-// Log app startup success
 app.Lifetime.ApplicationStarted.Register(() =>
 {
     Console.WriteLine("PantryTracker API has started successfully!");
 });
 
-// Start the app
 try
 {
     app.Run();
