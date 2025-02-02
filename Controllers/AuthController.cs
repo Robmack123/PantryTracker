@@ -1,13 +1,13 @@
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using System.Text;
+using Microsoft.IdentityModel.Tokens;
+using PantryTracker.Data;
 using PantryTracker.Models;
 using PantryTracker.Models.DTOs;
-using PantryTracker.Data;
 
 namespace PantryTracker.Controllers
 {
@@ -233,7 +233,25 @@ namespace PantryTracker.Controllers
                     UpdatedAt = pi.UpdatedAt
                 }).ToList()
             };
+            var userDto = new UserProfileDTO
+            {
+                Id = profile.Id,
+                FirstName = profile.FirstName,
+                LastName = profile.LastName,
+                IdentityUserId = identityUserId,
+                HouseholdId = profile.HouseholdId,
+                HouseholdName = profile.Household?.Name,
+                PantryItems = profile.PantryItems?.Select(pi => new PantryItemDTO
+                {
+                    Id = pi.Id,
+                    Name = pi.Name,
+                    Quantity = pi.Quantity,
+                    UpdatedAt = pi.UpdatedAt
+                }).ToList()
+            };
 
+            return Ok(userDto);
+        }
             return Ok(userDto);
         }
 
@@ -248,3 +266,4 @@ namespace PantryTracker.Controllers
         }
     }
 }
+

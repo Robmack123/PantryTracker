@@ -1,14 +1,12 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using System.Text.Json.Serialization;
 using dotenv.net;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using PantryTracker.Data;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Logging to help diagnose startup failures
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
 
 // Load environment variables from .env file **before building services**
 DotEnv.Load();
@@ -20,6 +18,7 @@ builder.Services.AddControllers().AddJsonOptions(opts =>
 });
 
 // Add HttpClient for external API calls
+builder.Services.AddHttpClient();
 builder.Services.AddHttpClient();
 
 // Swagger/OpenAPI configuration
@@ -95,13 +94,22 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Database configuration
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+if (string.IsNullOrEmpty(databaseUrl))
+{
+    throw new InvalidOperationException("DATABASE_URL environment variable is missing.");
+}
+builder.Services.AddNpgsql<PantryTrackerDbContext>(databaseUrl);
+
 var app = builder.Build();
 
-// Disable HTTPS redirection in production (Azure enforces HTTPS automatically)
 if (!app.Environment.IsProduction())
 {
     app.UseHttpsRedirection();
 }
+
+app.UseCors("AllowFrontend");
 
 app.UseCors("AllowFrontend");
 
