@@ -59,14 +59,18 @@ export default function Register({ setLoggedInUser }) {
       lastName,
       email,
       password,
-      joinCode: joinCode || null,
-      newHouseholdName: newHouseholdName || null,
+      joinCode: joinCode || "", // send an empty string rather than null
+      newHouseholdName: newHouseholdName || "",
     };
 
     try {
-      const user = await register(newUser);
-      if (user) {
-        setLoggedInUser(user);
+      const result = await register(newUser);
+      // result is now {} (or a success indicator)
+      if (result !== null) {
+        // Registration was successful; set the logged in user if needed,
+        // or simply navigate to home.
+        // You can also call tryGetLoggedInUser() after navigation if needed.
+        setLoggedInUser(result); // note: result might be {} so you might want to update user state later.
         navigate("/");
       }
     } catch (err) {

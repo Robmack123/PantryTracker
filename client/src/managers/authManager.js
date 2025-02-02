@@ -64,6 +64,7 @@ export const register = (userProfile) => {
         throw new Error(error.message || "Registration failed.");
       });
     }
-    return tryGetLoggedInUser();
+    // Instead of calling tryGetLoggedInUser(), return a dummy success object.
+    return {};
   });
 };
