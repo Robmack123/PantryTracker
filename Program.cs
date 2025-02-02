@@ -40,7 +40,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
     {
         options.Cookie.Name = "PantryTrackerLoginCookie";
-        options.Cookie.SameSite = SameSiteMode.Strict;
+        // Allow the cookie to be sent cross-site by using None
+        options.Cookie.SameSite = SameSiteMode.None;
+        // Ensure cookies are only sent over HTTPS
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Cookie.HttpOnly = true;
         options.Cookie.MaxAge = TimeSpan.FromDays(7);
         options.SlidingExpiration = true;
