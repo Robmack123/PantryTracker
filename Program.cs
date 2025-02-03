@@ -28,6 +28,8 @@ builder.Services.AddControllers().AddJsonOptions(opts =>
     opts.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
 });
 
+builder.Services.AddHttpClient();
+
 // (Other services like HttpClient, Swagger, etc.)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
