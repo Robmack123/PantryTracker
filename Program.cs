@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Identity;
 using PantryTracker.Data;
 using System.Text.Json.Serialization;
 
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Logging to help diagnose startup failures
