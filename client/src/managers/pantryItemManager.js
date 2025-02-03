@@ -1,15 +1,22 @@
 const apiUrl =
   "https://pantrytrackingapp-degqcdguf7dbg0c4.canadacentral-01.azurewebsites.net/api/pantryitem";
 
+// Helper function to get auth headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("authToken");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 export const getPantryItems = (page = 1, pageSize = 10, searchQuery = "") => {
   const query = `page=${page}&pageSize=${pageSize}${
     searchQuery ? `&searchQuery=${encodeURIComponent(searchQuery)}` : ""
   }`;
   return fetch(`${apiUrl}?${query}`, {
     method: "GET",
-    credentials: "include",
+    // When using token-based auth, you don't need credentials: "include"
     headers: {
       "Content-Type": "application/json",
+      ...getAuthHeaders(),
     },
   }).then((res) => {
     if (!res.ok) {
@@ -29,9 +36,9 @@ export const getPantryItemsByCategory = (
     `${apiUrl}/by-category?${queryString}&page=${page}&pageSize=${pageSize}`,
     {
       method: "GET",
-      credentials: "include",
       headers: {
         "Content-Type": "application/json",
+        ...getAuthHeaders(),
       },
     }
   ).then((res) => {
@@ -45,9 +52,9 @@ export const getPantryItemsByCategory = (
 export const addOrUpdatePantryItem = (pantryItem) => {
   return fetch(`${apiUrl}`, {
     method: "POST",
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      ...getAuthHeaders(),
     },
     body: JSON.stringify(pantryItem),
   }).then((res) => {
@@ -63,6 +70,7 @@ export const updatePantryItemQuantity = (itemId, dto) => {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
+      ...getAuthHeaders(),
     },
     body: JSON.stringify(dto),
   }).then((res) => {
@@ -76,9 +84,9 @@ export const updatePantryItemQuantity = (itemId, dto) => {
 export const deletePantryItem = (id) => {
   return fetch(`${apiUrl}/${id}`, {
     method: "DELETE",
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      ...getAuthHeaders(),
     },
   }).then((res) => {
     if (!res.ok) {
@@ -91,9 +99,9 @@ export const deletePantryItem = (id) => {
 export const toggleMonitorLowStock = (id) => {
   return fetch(`${apiUrl}/${id}/toggle-monitor`, {
     method: "PUT",
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      ...getAuthHeaders(),
     },
   }).then((res) => {
     if (!res.ok) {
@@ -110,9 +118,9 @@ export const searchBrandedFood = (name, limit = 10, page = 1) => {
     )}&limit=${limit}&page=${page}`,
     {
       method: "GET",
-      credentials: "include",
       headers: {
         "Content-Type": "application/json",
+        ...getAuthHeaders(),
       },
     }
   ).then((res) => {
@@ -128,6 +136,7 @@ export const updatePantryItemDetails = (id, dto) => {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
+      ...getAuthHeaders(),
     },
     body: JSON.stringify(dto),
   }).then((res) => {
