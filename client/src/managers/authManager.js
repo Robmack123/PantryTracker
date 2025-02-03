@@ -1,46 +1,61 @@
+// managers/authManager.js
 const _apiUrl =
   "https://pantrytrackingapp-degqcdguf7dbg0c4.canadacentral-01.azurewebsites.net/api/auth";
 
+// Login: return the JWT and user info
 export const login = (email, password) => {
   return fetch(_apiUrl + "/login", {
     method: "POST",
-    credentials: "include",
     headers: {
       Authorization: `Basic ${btoa(`${email}:${password}`)}`,
     },
-  }).then((res) => {
-    if (res.status !== 200) {
-      return Promise.resolve(null);
-    } else {
-      // Instead of calling tryGetLoggedInUser(), return the JSON from the login response.
-      return res.json();
-    }
-  });
+  })
+    .then((res) => {
+      if (res.status !== 200) {
+        return Promise.resolve(null);
+      } else {
+        return res.json();
+      }
+    })
+    .then((data) => {
+      if (data && data.token) {
+        localStorage.setItem("authToken", data.token);
+        return data.user;
+      }
+      return null;
+    });
 };
 
+// Logout: remove the token
 export const logout = () => {
-  return fetch(_apiUrl + "/logout");
+  localStorage.removeItem("authToken");
+  return Promise.resolve();
 };
 
+// Helper to get auth headers for subsequent requests
+export const getAuthHeaders = () => {
+  const token = localStorage.getItem("authToken");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+// Get logged in user (calls /me)
 export const tryGetLoggedInUser = () => {
-  // Normalize the current pathname
+  // Skip call on login or register pages to avoid loops
   const currentPath = window.location.pathname
     .replace(/\/+$/, "")
     .toLowerCase();
-
-  // If we're on the login or register page, just resolve to null
   if (currentPath === "/login" || currentPath === "/register") {
     console.log("Skipping /me call on", currentPath);
     return Promise.resolve(null);
   }
 
-  // Otherwise, call the /me endpoint.
-  return fetch(_apiUrl + "/me", { credentials: "include" })
+  return fetch(_apiUrl + "/me", {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  })
     .then((res) => {
-      // If we get a 401, just resolve to null (do not redirect here)
-      if (res.status === 401) {
-        return null;
-      }
+      if (res.status === 401) return null;
       return res.json();
     })
     .catch((error) => {
@@ -49,22 +64,29 @@ export const tryGetLoggedInUser = () => {
     });
 };
 
+// Register: return the JWT and user info upon success
 export const register = (userProfile) => {
   userProfile.password = btoa(userProfile.password);
   return fetch(_apiUrl + "/register", {
-    credentials: "include",
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(userProfile),
-  }).then((res) => {
-    if (!res.ok) {
-      return res.json().then((error) => {
-        throw new Error(error.message || "Registration failed.");
-      });
-    }
-    // Instead of calling tryGetLoggedInUser(), return a dummy success object.
-    return {};
-  });
+  })
+    .then((res) => {
+      if (!res.ok) {
+        return res.json().then((error) => {
+          throw new Error(error.message || "Registration failed.");
+        });
+      }
+      return res.json();
+    })
+    .then((data) => {
+      if (data && data.token) {
+        localStorage.setItem("authToken", data.token);
+        return data.user;
+      }
+      return null;
+    });
 };

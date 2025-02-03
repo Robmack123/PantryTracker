@@ -1,8 +1,10 @@
-using System.Text.Json.Serialization;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using dotenv.net;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using PantryTracker.Data;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,51 +21,36 @@ builder.Services.AddControllers().AddJsonOptions(opts =>
     opts.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
 });
 
-// Add HttpClient for external API calls
-try
-{
-    builder.Services.AddHttpClient();
-    Console.WriteLine("HttpClient service configured.");
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"Failed to configure HttpClient: {ex.Message}");
-    throw;
-}
-
-// Swagger/OpenAPI configuration
+// (Other services like HttpClient, Swagger, etc.)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configure authentication with cookie-based login
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+// Configure JWT Authentication
+// (Replace "YOUR_SECRET_KEY_HERE" with your own secret key. You may want to load it from configuration.)
+var jwtSecretKey = builder.Configuration["Jwt:SecretKey"] ?? "YOUR_SECRET_KEY_HERE";
+var issuer = builder.Configuration["Jwt:Issuer"] ?? "YourIssuer";
+var audience = builder.Configuration["Jwt:Audience"] ?? "YourAudience";
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.Cookie.Name = "PantryTrackerLoginCookie";
-        // Allow the cookie to be sent cross-site by using None
-        options.Cookie.SameSite = SameSiteMode.None;
-        // Ensure cookies are only sent over HTTPS
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-        options.Cookie.HttpOnly = true;
-        options.Cookie.MaxAge = TimeSpan.FromDays(7);
-        options.SlidingExpiration = true;
-        options.ExpireTimeSpan = TimeSpan.FromHours(24);
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = issuer,
+        ValidAudience = audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey))
+    };
+});
 
-        // Prevent redirects for API calls (return 401 instead)
-        options.Events.OnRedirectToLogin = context =>
-        {
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            return Task.CompletedTask;
-        };
-        options.Events.OnRedirectToAccessDenied = context =>
-        {
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            return Task.CompletedTask;
-        };
-    });
-
-
-// Configure IdentityCore for user authentication
+// Configure IdentityCore for user authentication (remains mostly unchanged)
 try
 {
     builder.Services.AddIdentityCore<IdentityUser>(config =>
@@ -86,13 +73,9 @@ catch (Exception ex)
     throw;
 }
 
-// Allow passing datetimes without time zone data
+// (Remaining code to set up DB connection, CORS, etc. remains the same)
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
-
-// Step 1: Get database connection string from environment variables
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-
-// Step 2: Validate and log the database connection string
 if (string.IsNullOrEmpty(databaseUrl))
 {
     Console.WriteLine("ERROR: DATABASE_URL is missing in Azure. Ensure it is set in Application Settings.");
@@ -100,12 +83,9 @@ if (string.IsNullOrEmpty(databaseUrl))
 }
 else
 {
-    // Mask password in logs to avoid exposing secrets
     var maskedDatabaseUrl = System.Text.RegularExpressions.Regex.Replace(databaseUrl, @"Password=[^;]*", "Password=****");
     Console.WriteLine($"DATABASE_URL is loaded: {maskedDatabaseUrl}");
 }
-
-// Step 3: Initialize PostgreSQL database connection
 try
 {
     builder.Services.AddNpgsql<PantryTrackerDbContext>(databaseUrl);
@@ -117,13 +97,12 @@ catch (Exception ex)
     throw;
 }
 
-// Configure CORS to allow requests from Amplify (frontend)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
-        builder =>
+        policyBuilder =>
         {
-            builder.WithOrigins("https://deployment.d1n47r1bcwr1gk.amplifyapp.com")
+            policyBuilder.WithOrigins("https://deployment.d1n47r1bcwr1gk.amplifyapp.com")
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials();
@@ -132,38 +111,30 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Disable HTTPS redirection in production (Azure enforces HTTPS automatically)
 if (!app.Environment.IsProduction())
 {
     app.UseHttpsRedirection();
 }
 
-// Enable Swagger in development mode
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// Ensure authentication & authorization are correctly applied
+// IMPORTANT: Use CORS and authentication middleware
+app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-// Enable CORS policy for the app
-app.UseCors("AllowFrontend");
-
-// Health check endpoint for debugging
 app.MapGet("/health", () => Results.Ok("Healthy"));
 
-// Log app startup success
 app.Lifetime.ApplicationStarted.Register(() =>
 {
     Console.WriteLine("PantryTracker API has started successfully!");
 });
 
-// Start the app
 try
 {
     app.Run();
