@@ -5,7 +5,11 @@ using dotenv.net;
 using Microsoft.AspNetCore.Identity;
 using PantryTracker.Data;
 using System.Text.Json.Serialization;
+using System.IdentityModel.Tokens.Jwt;
 
+
+
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 
