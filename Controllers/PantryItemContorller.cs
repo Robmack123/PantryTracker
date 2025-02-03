@@ -29,6 +29,7 @@ namespace PantryTracker.Controllers
         {
             try
             {
+                // Retrieve the user's ID from the JWT claims.
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 var userProfile = _dbContext.UserProfiles
                     .FirstOrDefault(up => up.IdentityUserId == userId);
@@ -38,14 +39,20 @@ namespace PantryTracker.Controllers
                     return BadRequest(new { Message = "You are not part of a household." });
                 }
 
+                // Build the query for pantry items belonging to the user's household.
                 var query = _dbContext.PantryItems
                     .Where(pi => pi.HouseholdId == userProfile.HouseholdId);
 
+                // Use EF.Functions.Like for a case-insensitive search
                 if (!string.IsNullOrEmpty(searchQuery))
                 {
-                    query = query.Where(pi => pi.Name.ToLower().Contains(searchQuery.ToLower()));
+                    query = query.Where(pi => EF.Functions.Like(pi.Name, $"%{searchQuery}%"));
                 }
 
+                // Get total count before pagination.
+                var totalItems = query.Count();
+
+                // Apply ordering and pagination.
                 var pantryItems = query
                     .OrderBy(pi => pi.Name)
                     .Skip((page - 1) * pageSize)
@@ -60,8 +67,6 @@ namespace PantryTracker.Controllers
                     })
                     .ToList();
 
-                var totalItems = query.Count();
-
                 return Ok(new
                 {
                     Items = pantryItems,
@@ -70,7 +75,8 @@ namespace PantryTracker.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error fetching pantry items: {ex.Message}");
+                // Log the full exception details to the console.
+                Console.WriteLine($"Error fetching pantry items: {ex.ToString()}");
                 return StatusCode(500, new { Message = "An error occurred.", Exception = ex.Message });
             }
         }
@@ -432,8 +438,5 @@ namespace PantryTracker.Controllers
                 return StatusCode(500, new { Message = "An error occurred.", Exception = ex.Message });
             }
         }
-
-
-
     }
 }
