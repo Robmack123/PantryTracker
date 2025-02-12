@@ -108,7 +108,6 @@ namespace PantryTracker.Controllers
             }
         }
 
-        // The register endpoint can remain largely the same, but you may also choose to return a token upon registration.
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register(RegistrationDTO registration)
@@ -250,8 +249,6 @@ namespace PantryTracker.Controllers
         [Authorize]
         public async Task<IActionResult> Logout()
         {
-            // With JWT, logging out is typically handled client‑side by removing the token.
-            // Optionally, you could implement token blacklisting.
             return Ok();
         }
 

@@ -21,7 +21,7 @@ namespace PantryTracker.Controllers
         public PantryItemController(PantryTrackerDbContext dbContext, HttpClient httpClient)
         {
             _dbContext = dbContext;
-            _httpClient = httpClient; // Injected HttpClient
+            _httpClient = httpClient;
         }
 
         [HttpGet]

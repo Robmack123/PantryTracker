@@ -1,7 +1,6 @@
 const _apiUrl =
   "https://pantrytrackingapp-degqcdguf7dbg0c4.canadacentral-01.azurewebsites.net/api/household";
 
-// Helper function to get the Authorization header
 const getAuthHeaders = () => {
   const token = localStorage.getItem("authToken");
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -10,7 +9,6 @@ const getAuthHeaders = () => {
 export const getHouseholdUsers = () => {
   return fetch(`${_apiUrl}/members?`, {
     method: "GET",
-    // With JWT, you typically don't need credentials: "include"
     headers: {
       "Content-Type": "application/json",
       ...getAuthHeaders(),
@@ -50,7 +48,7 @@ export const joinHousehold = (userId, joinCode) => {
     if (!res.ok) {
       throw new Error("Failed to join household.");
     }
-    return res.json(); // Assuming this returns the updated user info
+    return res.json();
   });
 };
 

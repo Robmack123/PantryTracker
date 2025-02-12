@@ -13,7 +13,6 @@ export const getPantryItems = (page = 1, pageSize = 10, searchQuery = "") => {
   }`;
   return fetch(`${apiUrl}?${query}`, {
     method: "GET",
-    // When using token-based auth, you don't need credentials: "include"
     headers: {
       "Content-Type": "application/json",
       ...getAuthHeaders(),

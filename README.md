@@ -2,6 +2,8 @@
 
 PantrySync is a web application designed for families and shared households to manage pantry items efficiently. The app helps prevent duplicate purchases and notifies users when items are low on stock. It simplifies household inventory management and encourages collaboration among members.
 
+[**Live Application**](https://deployment.d1n47r1bcwr1gk.amplifyapp.com/login)
+
 ---
 
 ## Table of Contents

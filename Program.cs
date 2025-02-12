@@ -34,8 +34,6 @@ builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configure JWT Authentication
-// (Replace "YOUR_SECRET_KEY_HERE" with your own secret key. You may want to load it from configuration.)
 var jwtSecretKey = builder.Configuration["Jwt:SecretKey"] ?? "YOUR_SECRET_KEY_HERE";
 var issuer = builder.Configuration["Jwt:Issuer"] ?? "YourIssuer";
 var audience = builder.Configuration["Jwt:Audience"] ?? "YourAudience";
@@ -82,7 +80,6 @@ catch (Exception ex)
     throw;
 }
 
-// (Remaining code to set up DB connection, CORS, etc. remains the same)
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 if (string.IsNullOrEmpty(databaseUrl))
@@ -131,7 +128,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// IMPORTANT: Use CORS and authentication middleware
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
